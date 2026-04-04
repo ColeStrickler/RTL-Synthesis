@@ -33,7 +33,7 @@ int main()
     plus->parent = times;
     times->parent = out;
 
-    Verifier verify({{2,3, 4}, {1,1,4}},  {11,5}, {in1, in2, in3});
+    Verifier verify({{3,3, 3}, {3,4,6}, {2,1,1}, {0,1,0}},  {12,18,3,0}, {in1, in2, in3});
     verify.SetMaxInputFanout(4);
     if (verify.Verify(0))
     {

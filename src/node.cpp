@@ -64,6 +64,7 @@ bool Verifier::Verify(int i)
     printf("input_combination_idx_size %d\n", input_combination_indexes.size());
     for (auto& input_combination: input_combination_indexes)
     {
+        printf("here\n");
         int x = 0;
         for (auto& inode: m_InputNodes) // give input nodes values
         {
@@ -117,9 +118,10 @@ bool Verifier::Verify(int i)
                         printf("output node\n");
                         if (node->val == expected_output)
                         {
-                            return VerifySpecificCombo(i+1, combo);
+                            if (VerifySpecificCombo(i+1, combo))
+                                return true;
                         }
-                        printf("restart\n");
+                        printf("restart %d\n", frontier.size());
                         done = true;
                         break;
                         // if correct, we can either go to next example
@@ -262,8 +264,8 @@ bool Verifier::VerifySpecificCombo(int input_idx, int combo)
                             {
                                 return VerifySpecificCombo(input_idx+1, combo);
                             }
-                            printf("restart\n");
-                            done = true;
+                            printf("restart combo\n");
+                            return false;
                             break;
                             // if correct, we can either go to next example
                             // or continue enumerating all correct permutations for this example
