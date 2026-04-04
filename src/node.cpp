@@ -8,7 +8,7 @@ Verifier::~Verifier()
 }
 
 Verifier::Verifier(const std::vector<std::vector<int>> &input, const std::vector<int> &output, std::vector<InputNode *> input_nodes) : \
- m_Input(input), m_Output(output), m_InputNodes(input_nodes), max_input_fanout(8)
+ m_Input(input), m_Output(output), m_InputNodes(input_nodes), max_input_fanout(8), input_perm_check(0)
 
 {
 
@@ -28,7 +28,7 @@ Verifier::Verifier(const std::vector<std::vector<int>> &input, const std::vector
 bool Verifier::Verify(int i)
 {
     
-    if (i == m_Input.size() - 1)
+    if (i == m_Input.size())
         return true;
 
     // we BFS to a RegNode 
@@ -152,8 +152,12 @@ bool Verifier::Verify(int i)
 bool Verifier::VerifySpecificCombo(int input_idx, int combo)
 {
     
-    if (input_idx == m_Input.size() - 1)
+    if (input_idx == m_Input.size())
+    {
+        input_perm_check = combo;
+       
         return true;
+    }
 
     // we BFS to a RegNode 
     // then we do it again, where the RegNodes are leaves
@@ -256,7 +260,7 @@ bool Verifier::VerifySpecificCombo(int input_idx, int combo)
                             printf("output node\n");
                             if (node->val == expected_output)
                             {
-                                return Verify(input_idx+1);
+                                return VerifySpecificCombo(input_idx+1, combo);
                             }
                             printf("restart\n");
                             done = true;

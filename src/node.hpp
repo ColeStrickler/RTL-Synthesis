@@ -214,7 +214,15 @@ public:
     
     void SetMaxInputFanout(int fanout) {max_input_fanout = fanout;}
 
+
+
+
+        // Stats
+    int input_perm_check;
+
 private:
+
+
     int max_input_fanout;
 
     std::vector<std::vector<int>> input_combination_indexes;

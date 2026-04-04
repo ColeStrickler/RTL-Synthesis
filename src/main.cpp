@@ -17,8 +17,8 @@ int main()
     auto in1 = new InputNode();
     auto in2 = new InputNode();
     auto in3 = new InputNode();
-    auto plus = new PlusNode();
-    auto times = new TimesNode();
+    auto plus = new TimesNode();
+    auto times = new PlusNode();
     auto out = new OutputNode();
     in1->parent = plus;
     in2->parent = plus;
@@ -33,10 +33,11 @@ int main()
     plus->parent = times;
     times->parent = out;
 
-    Verifier verify({{3,2, 4}, {2,2,4}},  {20,16}, {in1, in2, in3});
+    Verifier verify({{2,3, 4}, {1,1,4}},  {11,5}, {in1, in2, in3});
     verify.SetMaxInputFanout(4);
     if (verify.Verify(0))
     {
+        printf("Input Permutations checked %d\n", verify.input_perm_check);
         printf("OKAY\n");
     } else
     {
