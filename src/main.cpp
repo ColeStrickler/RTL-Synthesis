@@ -34,7 +34,7 @@ int main()
     times->parent = out;
 
     Verifier verify({{3,2, 4}, {2,2,4}},  {20,16}, {in1, in2, in3});
-
+    verify.SetMaxInputFanout(4);
     if (verify.Verify(0))
     {
         printf("OKAY\n");

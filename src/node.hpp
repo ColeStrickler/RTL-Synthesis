@@ -207,6 +207,7 @@ public:
 
 
     bool Verify(int i);
+    bool VerifySpecificCombo(int input_idx, int combo);
 
     void BackTrackPermuteInputs(\
             std::vector<int>& input_vec, int input_count, std::vector<std::vector<int>>& ret, std::vector<int>& curr, std::unordered_map<int, int>& count);
