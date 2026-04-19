@@ -1,8 +1,8 @@
 #include "node.hpp"
 
-
-    
-
+#include "vm.hpp"
+#include <algorithm>
+#include <random>
 Verifier::~Verifier()
 {
 }
@@ -21,8 +21,13 @@ Verifier::Verifier(const std::vector<std::vector<int>> &input, const std::vector
     std::vector<int> curr = {};
     std::unordered_map<int, int> count_map;
     BackTrackPermuteInputs(input_vec, m_InputNodes.size(), input_combination_indexes,  curr, count_map);
-    printf("init size %d\n", input_combination_indexes.size());
+    std::mt19937 g(42);  // deterministic (recommended for benchmarking)
 
+std::shuffle(input_combination_indexes.begin(),
+             input_combination_indexes.end(),
+             g);
+    printf("init size %d\n", input_combination_indexes.size());
+    m_VM = new VM();
 }
 
 bool Verifier::Verify(int i)
@@ -52,6 +57,10 @@ bool Verifier::Verify(int i)
 
     auto input = m_Input[i];
 
+
+    
+
+
         /*
             For each input example,
 
@@ -73,7 +82,7 @@ bool Verifier::Verify(int i)
             x++;
             frontier.push(inode);
         }
-        printf("frontier size %d\n", frontier.size());
+       // printf("frontier size %d\n", frontier.size());
         bool done = false;
         while (!done)
         {
@@ -111,17 +120,17 @@ bool Verifier::Verify(int i)
                     case NODETAG::OUTPUT_NODE: // check against output
                     {
                          
-                        printf("output node\n");
+                       // printf("output node\n");
                         assert(node->ReceivedInputs());
                         
                         node->PropagateVal();
-                        printf("output node\n");
+                      //  printf("output node\n");
                         if (node->val == expected_output)
                         {
                             if (VerifySpecificCombo(i+1, combo))
                                 return true;
                         }
-                        printf("restart %d\n", frontier.size());
+                       // printf("restart %d\n", frontier.size());
                         done = true;
                         break;
                         // if correct, we can either go to next example
@@ -148,6 +157,49 @@ bool Verifier::Verify(int i)
         combo++;
     }
     printf("combo = %d\n", combo);
+    return false;
+}
+
+bool Verifier::VerifyVM()
+{
+
+
+    m_VM->Compile(m_InputNodes);
+    printf("Compiled\n");
+       // vm.SetInputs({2,1,1, 1, 1, 1});
+    //vm.PrintProgram();
+
+
+    return VMVerifier(0);
+}
+
+bool Verifier::VMVerifier(int i)
+{
+    if (i >= m_Output.size())
+    {
+        return true;
+    }
+    
+    for (auto& input_combination: input_combination_indexes)
+    {
+        std::vector<uint32_t> input_vals;
+        printf("here\n");
+        int x = 0;
+        for (auto& inode: m_InputNodes) // give input nodes values
+        {
+            input_vals.push_back((m_Input[i][input_combination[x]]));
+            x++;
+        }
+        m_VM->SetInputs(input_vals);
+        int res = m_VM->ExecuteProgram();
+        if (res == m_Output[i])
+        {
+            if (VMVerifier(i+1))
+                return true;
+            
+        }
+    }
+  
     return false;
 }
 
@@ -241,6 +293,8 @@ bool Verifier::VerifySpecificCombo(int input_idx, int combo)
                     
                     switch(node->nodetag)
                     {
+
+
                         case NODETAG::REG_NODE:
                         {
                             assert(node->ReceivedInputs());
@@ -277,7 +331,7 @@ bool Verifier::VerifySpecificCombo(int input_idx, int combo)
                                 frontier.push(node);
                                 break;
                             }
-                            printf("default\n");
+                            //printf("default\n");
                             node->PropagateVal();
                             auto parent = node->GetParent();
                             if (visited.count(parent))
@@ -329,4 +383,34 @@ void  Verifier::BackTrackPermuteInputs(std::vector<int>& input_vec, int input_co
     }
 
     return;
+}
+
+void BinaryNode::Compile(VM *vm)
+{
+    printf("%s->Compile()   0x%x, 0x%x\n", opcode_to_string(nodetag_to_opcode(nodetag)).c_str(), leftChild, rightChild);
+    rightChild->Compile(vm);
+    leftChild->Compile(vm);
+    
+
+    vm->BinOpInst(nodetag_to_opcode(nodetag));
+}
+
+void InputNode::Compile(VM *vm)
+{
+    printf("input?\n");
+    vm->PushInputInst(vm->m_NumInputs++);
+}
+
+void OutputNode::Compile(VM *vm)
+{
+    
+    Child->Compile(vm);
+    printf("ADding output inst\n");
+    printf("here\n");
+    vm->OutputInst();
+}
+
+void RegNode::Compile(VM *vm)
+{
+    Child->Compile(vm);
 }

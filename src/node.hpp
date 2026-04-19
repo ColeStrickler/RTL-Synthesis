@@ -7,8 +7,7 @@
 #include <unordered_map>
 #include <queue>
 #include <cassert>
-
-
+class VM;
 enum NODETAG
 {
     RTL_NODE,
@@ -22,7 +21,8 @@ enum NODETAG
     BITOR_NODE,
     BITXOR_NODE,
     BITAND_NODE,
-    BITNOT_NODE
+    BITNOT_NODE,
+    MINUS_NODE
 };
 
 class RTLNode
@@ -48,6 +48,12 @@ public:
         return inputs_received == inputs_needed;
     }
 
+
+    virtual void Compile(VM* vm)
+    {
+        return;
+    }
+
     RTLNode* parent;
     int val;
     int inputs_received;
@@ -59,83 +65,95 @@ private:
 };
 
 
+class BinaryNode : public RTLNode
+{
+public:
+    BinaryNode(NODETAG tag)
+        : RTLNode(tag), leftChild(nullptr), rightChild(nullptr)
+    {
+        inputs_needed = 2;
+    }
+
+    virtual void Compile(VM* vm) override;
+
+    RTLNode* leftChild;
+    RTLNode* rightChild;
+
+};
+
+
 
 // Nodes with two children
-class PlusNode : public RTLNode
+class PlusNode : public BinaryNode 
 {
 public:
-    PlusNode() : RTLNode(PLUS_NODE) {inputs_needed = 2;}
+    PlusNode() : BinaryNode(PLUS_NODE) {inputs_needed = 2;}
 
-    void PropagateVal() override {val = leftChild->val + rightChild->val; printf("add val %d\n", val); inputs_received = 0; parent->inputs_received++; };
-    RTLNode* leftChild;
-    RTLNode* rightChild;
+    void PropagateVal() override {val = leftChild->val + rightChild->val; inputs_received = 0; parent->inputs_received++; };
 };
 
-class TimesNode : public RTLNode
+class MinusNode : public BinaryNode 
 {
 public:
-    TimesNode() : RTLNode(TIMES_NODE) {inputs_needed = 2;}
+    MinusNode() : BinaryNode(MINUS_NODE) {inputs_needed = 2;}
 
-    void PropagateVal() override {val = leftChild->val * rightChild->val; printf("mult val %d\n", val); inputs_received = 0; parent->inputs_received++; };
-    RTLNode* leftChild;
-    RTLNode* rightChild;
+    void PropagateVal() override {val = leftChild->val - rightChild->val; inputs_received = 0; parent->inputs_received++; };
 };
 
-class ShiftLeftNode : public RTLNode
+
+
+class TimesNode : public BinaryNode
 {
 public:
-    ShiftLeftNode() : RTLNode(SHIFTL_NODE) {inputs_needed = 2;}
+    TimesNode() : BinaryNode(TIMES_NODE) {inputs_needed = 2;}
+
+    void PropagateVal() override {val = leftChild->val * rightChild->val; inputs_received = 0; parent->inputs_received++; };
+};
+
+class ShiftLeftNode : public BinaryNode
+{
+public:
+    ShiftLeftNode() : BinaryNode(SHIFTL_NODE) {inputs_needed = 2;}
 
 
 
     void PropagateVal() override {val = leftChild->val << rightChild->val; inputs_received = 0; parent->inputs_received++; };
-    RTLNode* leftChild;
-    RTLNode* rightChild;
 };
 
-class ShiftRightNode : public RTLNode
+class ShiftRightNode : public BinaryNode
 {
 public:
-    ShiftRightNode() : RTLNode(SHIFTR_NODE) {inputs_needed = 2;}
+    ShiftRightNode() : BinaryNode(SHIFTR_NODE) {inputs_needed = 2;}
 
     void PropagateVal() override {val = leftChild->val >> rightChild->val; inputs_received = 0; parent->inputs_received++; };
-    RTLNode* leftChild;
-    RTLNode* rightChild;
 };
 
-class BitwiseORNode : public RTLNode
+class BitwiseORNode : public BinaryNode
 {
 public:
-    BitwiseORNode() : RTLNode(BITOR_NODE) {inputs_needed = 2;}
+    BitwiseORNode() : BinaryNode(BITOR_NODE) {inputs_needed = 2;}
 
 
     void PropagateVal() override {val = leftChild->val | rightChild->val; inputs_received = 0; parent->inputs_received++; };
-    RTLNode* leftChild;
-    RTLNode* rightChild;
 };
 
-class BitWiseXORNode : public RTLNode
+class BitWiseXORNode : public BinaryNode
 {
 public:
-    BitWiseXORNode() : RTLNode(BITXOR_NODE) {inputs_needed = 2;}
+    BitWiseXORNode() : BinaryNode(BITXOR_NODE) {inputs_needed = 2;}
     void PropagateVal() override {val = leftChild->val ^ rightChild->val; inputs_received = 0; parent->inputs_received++; };
-    RTLNode* leftChild;
-    RTLNode* rightChild;
 };
 
-class BitwiseANDNode : public RTLNode
+class BitwiseANDNode : public BinaryNode
 {
 public:
-    BitwiseANDNode() : RTLNode(BITAND_NODE) {inputs_needed = 2;}
-    void PropagateVal() override {val = leftChild->val & rightChild->val; inputs_received = 0; parent->inputs_received++; };
-    RTLNode* leftChild;
-    RTLNode* rightChild;
+    BitwiseANDNode() : BinaryNode(BITAND_NODE) {inputs_needed = 2;}
 };
 
-class BitWiseNOTNode : public RTLNode
+class BitWiseNOTNode : public BinaryNode
 {
 public:
-    BitWiseNOTNode() : RTLNode(BITNOT_NODE)
+    BitWiseNOTNode() : BinaryNode(BITNOT_NODE)
     {
         inputs_needed = 1;
     }
@@ -154,7 +172,8 @@ public:
     {
         inputs_needed = 0;
     }
-    void PropagateVal() override {parent->inputs_received++; printf("input val %d\n", val); return;};
+    void PropagateVal() override {parent->inputs_received++; return;};
+    virtual void Compile(VM* vm) override;
 
     void SetVal(int value) {val = value; }
 
@@ -170,6 +189,9 @@ public:
     }
 
     void PropagateVal() override {val = Child->val; inputs_received = 0;};
+    virtual void Compile(VM* vm) override;
+
+    void Search();
 
     RTLNode* Child;
 
@@ -185,7 +207,7 @@ public:
         parent = nullptr; // explicitly null for single-child nodes
         inputs_needed = 1;
     }
-
+    virtual void Compile(VM* vm) override;
     void PropagateVal() override {val = Child->val; inputs_received = 0; parent->inputs_received++; };
 
     RTLNode* Child;
@@ -207,6 +229,8 @@ public:
 
 
     bool Verify(int i);
+    bool VerifyVM();
+    bool VMVerifier(int i);
     bool VerifySpecificCombo(int input_idx, int combo);
 
     void BackTrackPermuteInputs(\
@@ -222,7 +246,7 @@ public:
 
 private:
 
-
+    VM* m_VM;
     int max_input_fanout;
 
     std::vector<std::vector<int>> input_combination_indexes;
@@ -241,3 +265,5 @@ private:
 
 
 #endif
+
+
