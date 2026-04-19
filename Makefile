@@ -12,7 +12,7 @@ SRC_DIR = ./src
 
 
 # Compilation flags
-CXXFLAGS = $(INCLUDE_DIR) -I$(DTL_DIR) -O3 -g -D __aarch64__ -std=c++17 -pthread
+CXXFLAGS = $(INCLUDE_DIR) -I$(DTL_DIR) -O1 -g -D __aarch64__ -std=c++17 -pthread
 
 # C++ source files
 CPP_SOURCES = $(wildcard $(SRC_DIR)/*.cpp) 

@@ -88,7 +88,7 @@ inline OPCODE nodetag_to_opcode(NODETAG tag) {
 
         default:
         {
-            printf("nodetag_to_opcode() received bad tag %d\n", tag);
+            //printf("nodetag_to_opcode() received bad tag %d\n", tag);
             exit(-1);
         }
     }

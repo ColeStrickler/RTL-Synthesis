@@ -29,14 +29,14 @@ void VM::Compile(std::vector<InputNode *> input_nodes)
 
 
 
-        printf("here\n");
+        ////printf("here\n");
         int x = 0;
         for (auto& inode: input_nodes) // give input nodes values
         {
             //m_NumInputs++;
             frontier.push(inode);
         }
-       // printf("frontier size %d\n", frontier.size());
+       // ////printf("frontier size %d\n", frontier.size());
         bool done = false;
 
     bool left = true;
@@ -194,7 +194,7 @@ uint32_t VM::GetInput(uint8_t input)
 
 void VM::ReportError(const char *msg)
 {
-    printf("[VM::ERROR]: %s\n", msg);
+    ////printf("[VM::ERROR]: %s\n", msg);
     exit(-1);
 }
 
@@ -212,7 +212,7 @@ void VM::SetInputs(const std::vector<uint32_t> &ivals)
 
 void VM::PrintProgram()
 {
-    printf("PrintProgram()! Program Size: %d\n", m_ActiveProgramSize);
+    ////printf("PrintProgram()! Program Size: %d\n", m_ActiveProgramSize);
     int i = 0;
     while(i < m_ActiveProgramSize)
     {

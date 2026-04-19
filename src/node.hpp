@@ -231,6 +231,7 @@ public:
     bool Verify(int i);
     bool VerifyVM();
     bool VMVerifier(int i);
+    bool VMVerifierSpecificPermutation(int i, int j);
     bool VerifySpecificCombo(int input_idx, int combo);
 
     void BackTrackPermuteInputs(\

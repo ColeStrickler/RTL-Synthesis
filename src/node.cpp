@@ -26,7 +26,7 @@ Verifier::Verifier(const std::vector<std::vector<int>> &input, const std::vector
 std::shuffle(input_combination_indexes.begin(),
              input_combination_indexes.end(),
              g);
-    printf("init size %d\n", input_combination_indexes.size());
+    ////printff("init size %d\n", input_combination_indexes.size());
     m_VM = new VM();
 }
 
@@ -70,10 +70,10 @@ bool Verifier::Verify(int i)
         */
 
     int combo = 0;
-    printf("input_combination_idx_size %d\n", input_combination_indexes.size());
+    ////printff("input_combination_idx_size %d\n", input_combination_indexes.size());
     for (auto& input_combination: input_combination_indexes)
     {
-        printf("here\n");
+        ////printff("here\n");
         int x = 0;
         for (auto& inode: m_InputNodes) // give input nodes values
         {
@@ -82,7 +82,7 @@ bool Verifier::Verify(int i)
             x++;
             frontier.push(inode);
         }
-       // printf("frontier size %d\n", frontier.size());
+      
         bool done = false;
         while (!done)
         {
@@ -96,10 +96,11 @@ bool Verifier::Verify(int i)
                 frontier.push(rnode_parent);
             }
             currentRegNodes.clear();
-            
+             
             while (!frontier.empty())
             {
-                
+              //  //printff("frontier size %d\n", frontier.size());
+
                 auto node = frontier.front();
                 frontier.pop();
                 
@@ -120,17 +121,17 @@ bool Verifier::Verify(int i)
                     case NODETAG::OUTPUT_NODE: // check against output
                     {
                          
-                       // printf("output node\n");
+                       // ////printff("output node\n");
                         assert(node->ReceivedInputs());
                         
                         node->PropagateVal();
-                      //  printf("output node\n");
+                      //  ////printff("output node\n");
                         if (node->val == expected_output)
                         {
                             if (VerifySpecificCombo(i+1, combo))
                                 return true;
                         }
-                       // printf("restart %d\n", frontier.size());
+                       // ////printff("restart %d\n", frontier.size());
                         done = true;
                         break;
                         // if correct, we can either go to next example
@@ -138,12 +139,14 @@ bool Verifier::Verify(int i)
                     }
                     default:
                     {
+                        //printff("frontier size %d\n", frontier.size());
                         if (!node->ReceivedInputs())
                         {
+                            //printff("back  %d %d\n", node->nodetag, node->inputs_received);
                             frontier.push(node);
                             break;
                         }
-                        printf("default\n");
+                        ////printff("default\n");
                         node->PropagateVal();
                         auto parent = node->GetParent();
                         if (visited.count(parent))
@@ -156,18 +159,25 @@ bool Verifier::Verify(int i)
         }
         combo++;
     }
-    printf("combo = %d\n", combo);
+    ////printff("combo = %d\n", combo);
     return false;
 }
 
+
+#include <chrono>
 bool Verifier::VerifyVM()
 {
-
+    auto start = std::chrono::high_resolution_clock::now();
 
     m_VM->Compile(m_InputNodes);
-    printf("Compiled\n");
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    std::cout << "Compile Time: " << duration.count() << " us\n";
+
+
+    ////printff("Compiled\n");
        // vm.SetInputs({2,1,1, 1, 1, 1});
-    //vm.PrintProgram();
+    //vm.//printfProgram();
 
 
     return VMVerifier(0);
@@ -179,11 +189,11 @@ bool Verifier::VMVerifier(int i)
     {
         return true;
     }
-    
+    int j = 0;
     for (auto& input_combination: input_combination_indexes)
     {
         std::vector<uint32_t> input_vals;
-        printf("here\n");
+      //  ////printff("here\n");
         int x = 0;
         for (auto& inode: m_InputNodes) // give input nodes values
         {
@@ -194,17 +204,48 @@ bool Verifier::VMVerifier(int i)
         int res = m_VM->ExecuteProgram();
         if (res == m_Output[i])
         {
-            if (VMVerifier(i+1))
+            if (VMVerifierSpecificPermutation(i+1, j))
                 return true;
             
         }
+        j++;
     }
+  
+    return false;
+}
+
+bool Verifier::VMVerifierSpecificPermutation(int i, int j)
+{
+    if (i >= m_Output.size())
+    {
+        return true;
+    }
+    
+    auto input_combination = input_combination_indexes[j];
+    
+    std::vector<uint32_t> input_vals;
+    int x = 0;
+    for (auto& inode: m_InputNodes) // give input nodes values
+    {
+        input_vals.push_back((m_Input[i][input_combination[x]]));
+        x++;
+    }
+    m_VM->SetInputs(input_vals);
+    int res = m_VM->ExecuteProgram();
+    if (res == m_Output[i])
+    {
+        if (VMVerifier(i+1))
+            return true;
+        
+    }
+    
   
     return false;
 }
 
 bool Verifier::VerifySpecificCombo(int input_idx, int combo)
 {
+    //printff("COMBO %d\n", combo);
     
     if (input_idx == m_Input.size())
     {
@@ -255,7 +296,7 @@ bool Verifier::VerifySpecificCombo(int input_idx, int combo)
                 x++;
                 frontier.push(inode);
             }
-            printf("frontier size %d\n", frontier.size());
+            ////printff("frontier size %d\n", frontier.size());
 
 
 
@@ -309,16 +350,16 @@ bool Verifier::VerifySpecificCombo(int input_idx, int combo)
                         case NODETAG::OUTPUT_NODE: // check against output
                         {
                              
-                            printf("output node\n");
+                            ////printff("output node\n");
                             assert(node->ReceivedInputs());
                             
                             node->PropagateVal();
-                            printf("output node\n");
+                            ////printff("output node\n");
                             if (node->val == expected_output)
                             {
                                 return VerifySpecificCombo(input_idx+1, combo);
                             }
-                            printf("restart combo\n");
+                            ////printff("restart combo\n");
                             return false;
                             break;
                             // if correct, we can either go to next example
@@ -331,7 +372,7 @@ bool Verifier::VerifySpecificCombo(int input_idx, int combo)
                                 frontier.push(node);
                                 break;
                             }
-                            //printf("default\n");
+                            //////printff("default\n");
                             node->PropagateVal();
                             auto parent = node->GetParent();
                             if (visited.count(parent))
@@ -387,7 +428,7 @@ void  Verifier::BackTrackPermuteInputs(std::vector<int>& input_vec, int input_co
 
 void BinaryNode::Compile(VM *vm)
 {
-    printf("%s->Compile()   0x%x, 0x%x\n", opcode_to_string(nodetag_to_opcode(nodetag)).c_str(), leftChild, rightChild);
+    ////printff("%s->Compile()   0x%x, 0x%x\n", opcode_to_string(nodetag_to_opcode(nodetag)).c_str(), leftChild, rightChild);
     rightChild->Compile(vm);
     leftChild->Compile(vm);
     
@@ -397,7 +438,7 @@ void BinaryNode::Compile(VM *vm)
 
 void InputNode::Compile(VM *vm)
 {
-    printf("input?\n");
+    ////printff("input?\n");
     vm->PushInputInst(vm->m_NumInputs++);
 }
 
@@ -405,8 +446,8 @@ void OutputNode::Compile(VM *vm)
 {
     
     Child->Compile(vm);
-    printf("ADding output inst\n");
-    printf("here\n");
+    ////printff("ADding output inst\n");
+    ////printff("here\n");
     vm->OutputInst();
 }
 
