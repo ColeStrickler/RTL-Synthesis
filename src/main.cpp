@@ -2,11 +2,25 @@
 #include "stdio.h"
 #include "node.hpp"
 #include "vm.hpp"
-
+#include "printer.hpp"
 
 
 #include <iostream>
 #include <chrono>
+#include <fstream>
+#include <string>
+
+void WriteStringToFile(const std::string& filename, const std::string& content) {
+    std::ofstream out(filename);
+    if (!out) {
+        throw std::runtime_error("Failed to open file: " + filename);
+    }
+    out << content;
+}
+
+
+
+
 
 int main()
 {
@@ -70,28 +84,34 @@ int main()
     //printf("Result %d\n", vm.ExecuteProgram());
 
 
-    auto start = std::chrono::high_resolution_clock::now();
-    Verifier verify({{2,1,1, 2, 1, 1},{2,2,2, 2, 2, 2}, {4,4,4, 4, 4, 4} },  {6, 16, 64}, {in1, in2, in3, in4, in5, in6});
-    //verify.SetMaxInputFanout(4);
-    //if (verify.VerifyVM())
-    //    printf("OKAY\n");
-    //else
-    //    printf("NOT OKAY\n");    
-    //auto end = std::chrono::high_resolution_clock::now();
-    //auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    //std::cout << "Time: " << duration.count() << " us\n";
 
-   if (verify.Verify(0))
-   {
-       printf("Input Permutations checked %d\n", verify.input_perm_check);
-       printf("OKAY\n");
-   } else
-   {
-       printf("NOT OKAY\n");
-   }
-   auto end = std::chrono::high_resolution_clock::now();
-   auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-   std::cout << "Time: " << duration.count() << " us\n";
+   std::string module = RTLModulePrint::PrintModule("TestModule", out);
+    WriteStringToFile("./test.scala", module);
+
+
+
+    auto start = std::chrono::high_resolution_clock::now();
+    Verifier verify({{1},{2}, {3} },  {92, 16, 64}, {in1, in2, in3, in4, in5, in6});
+    verify.SetMaxInputFanout(6);
+    if (verify.VerifyVM())
+        printf("OKAY\n");
+    else
+        printf("NOT OKAY\n");    
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    std::cout << "Time: " << duration.count() << " us\n";
+
+   //if (verify.Verify(0))
+   //{
+   //    printf("Input Permutations checked %d\n", verify.input_perm_check);
+   //    printf("OKAY\n");
+   //} else
+   //{
+   //    printf("NOT OKAY\n");
+   //}
+   //auto end = std::chrono::high_resolution_clock::now();
+   //auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+   //std::cout << "Time: " << duration.count() << " us\n";
 
 
 

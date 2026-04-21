@@ -8,6 +8,10 @@
 #include <queue>
 #include <cassert>
 class VM;
+class RTLModulePrint;
+
+
+
 enum NODETAG
 {
     RTL_NODE,
@@ -54,6 +58,9 @@ public:
         return;
     }
 
+    virtual std::string Print(RTLModulePrint* mod_print) = 0;
+
+
     RTLNode* parent;
     int val;
     int inputs_received;
@@ -75,6 +82,8 @@ public:
     }
 
     virtual void Compile(VM* vm) override;
+    virtual std::string Print(RTLModulePrint* mod_print) override;
+
 
     RTLNode* leftChild;
     RTLNode* rightChild;
@@ -174,6 +183,7 @@ public:
     }
     void PropagateVal() override {parent->inputs_received++; return;};
     virtual void Compile(VM* vm) override;
+    virtual std::string Print(RTLModulePrint* mod_print) override;
 
     void SetVal(int value) {val = value; }
 
@@ -192,7 +202,7 @@ public:
     virtual void Compile(VM* vm) override;
 
     void Search();
-
+    virtual std::string Print(RTLModulePrint* mod_print) override;
     RTLNode* Child;
 
 };
@@ -209,7 +219,7 @@ public:
     }
     virtual void Compile(VM* vm) override;
     void PropagateVal() override {val = Child->val; inputs_received = 0; parent->inputs_received++; };
-
+    virtual std::string Print(RTLModulePrint* mod_print) override;
     RTLNode* Child;
 };
 

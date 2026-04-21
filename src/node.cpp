@@ -23,9 +23,9 @@ Verifier::Verifier(const std::vector<std::vector<int>> &input, const std::vector
     BackTrackPermuteInputs(input_vec, m_InputNodes.size(), input_combination_indexes,  curr, count_map);
     std::mt19937 g(42);  // deterministic (recommended for benchmarking)
 
-std::shuffle(input_combination_indexes.begin(),
-             input_combination_indexes.end(),
-             g);
+//std::shuffle(input_combination_indexes.begin(),
+//             input_combination_indexes.end(),
+//             g);
     ////printff("init size %d\n", input_combination_indexes.size());
     m_VM = new VM();
 }
@@ -436,11 +436,14 @@ void BinaryNode::Compile(VM *vm)
     vm->BinOpInst(nodetag_to_opcode(nodetag));
 }
 
+
 void InputNode::Compile(VM *vm)
 {
     ////printff("input?\n");
     vm->PushInputInst(vm->m_NumInputs++);
 }
+
+
 
 void OutputNode::Compile(VM *vm)
 {
@@ -451,7 +454,9 @@ void OutputNode::Compile(VM *vm)
     vm->OutputInst();
 }
 
+
 void RegNode::Compile(VM *vm)
 {
     Child->Compile(vm);
 }
+
