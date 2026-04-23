@@ -1,11 +1,17 @@
 #ifndef SEARCH_HPP
-#define SERACH_HPP
+#define SEARCH_HPP
 
+#include <optional>
 #include <queue>
 #include <stdint.h>
 #include <vector>
 
 #include "node.hpp"
+
+struct NonTermLocation {
+    RTLNode* parent;
+    enum Slot {LEFT, RIGHT, CHILD} slot;
+};
 
 struct WorkItem {
     RTLNode* node;
@@ -26,7 +32,7 @@ private:
 
     RTLNode* clone(RTLNode* toClone);
     bool isComplete(RTLNode* node);
-    RTLNode* leftMostNonTerm(RTLNode* node);
+    std::optional<NonTermLocation> leftMostNonTerm(RTLNode* node);
     void unroll(WorkItem* workItem);
 };
 

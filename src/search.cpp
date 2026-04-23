@@ -151,10 +151,60 @@ bool Search::isComplete(RTLNode* node) {
     return false;
 }
 
-RTLNode* Search::leftMostNonTerm(RTLNode* node) {
+std::optional<NonTermLocation> Search::leftMostNonTerm(RTLNode* node) {
     if (node == nullptr) {
-        return nullptr;
+        return std::nullopt;
     }
 
-    
+    switch (node->nodetag) {
+    case INPUT_NODE:
+        return std::nullopt;
+        break;
+    case OUTPUT_NODE: {
+        OutputNode* cast = static_cast<OutputNode*>(node);
+        if (cast->Child == nullptr) {
+            return NonTermLocation{node, NonTermLocation::CHILD};
+        }
+        return leftMostNonTerm(cast->Child);
+        break;
+    }
+    case REG_NODE: {
+        RegNode* cast = static_cast<RegNode*>(node);
+        if (cast->Child == nullptr) {
+            return NonTermLocation{node, NonTermLocation::CHILD}    ;
+        }
+        return leftMostNonTerm(cast->Child);
+        break;
+    }
+    case PLUS_NODE:
+    case MINUS_NODE:
+    case TIMES_NODE:
+    case SHIFTL_NODE:
+    case SHIFTR_NODE:
+    case BITOR_NODE:
+    case BITXOR_NODE:
+    case BITAND_NODE:
+    case BITNOT_NODE: {
+        BinaryNode* cast = static_cast<BinaryNode*>(node);
+        if (cast->leftChild == nullptr) {
+            return NonTermLocation{node, NonTermLocation::LEFT};
+        }
+
+        std::optional<NonTermLocation> leftResult = leftMostNonTerm(cast->leftChild);
+        if (leftResult.has_value()) {
+            return leftResult;
+        }
+
+        if (cast->rightChild == nullptr) {
+            return NonTermLocation{node, NonTermLocation::RIGHT};
+        }
+        return leftMostNonTerm(cast->rightChild);
+        break;
+    }
+    default:
+        std::cerr << "Error: Unknown node type in leftMostNonTerm function.\n";
+        break;
+    }
+
+    return std::nullopt;
 }
