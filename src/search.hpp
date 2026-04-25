@@ -25,7 +25,7 @@ struct WorkItem {
 
 class Search {
 public:
-    RTLNode* search(const std::vector<std::vector<int>>& inputs, const std::vector<std::vector<int>>& outputs);
+    RTLNode* topDown(const std::vector<std::vector<int>>& inputs, const std::vector<int>& outputs);
 
 private:
     std::priority_queue<WorkItem> m_workList;
@@ -33,6 +33,8 @@ private:
     RTLNode* clone(RTLNode* toClone);
     bool isComplete(RTLNode* node);
     std::optional<NonTermLocation> leftMostNonTerm(RTLNode* node);
+    std::vector<NODETAG> productions(const NonTermLocation& location);
+    WorkItem* replaceNonTerm(RTLNode* root, const NonTermLocation& location, NODETAG production);
     void unroll(WorkItem* workItem);
 };
 

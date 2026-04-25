@@ -208,3 +208,153 @@ std::optional<NonTermLocation> Search::leftMostNonTerm(RTLNode* node) {
 
     return std::nullopt;
 }
+
+std::vector<NODETAG> Search::productions(const NonTermLocation& location) {
+    switch (location.parent->nodetag) {
+    case INPUT_NODE:
+        // we should not get here
+        std::cerr << "Error: Tried to get productions for terminal input node.\n";
+        return {};
+        break;
+    case REG_NODE:
+        return {PLUS_NODE, TIMES_NODE, SHIFTL_NODE,
+                SHIFTR_NODE, BITOR_NODE, BITXOR_NODE, BITAND_NODE, BITNOT_NODE, MINUS_NODE};
+        break;
+    case OUTPUT_NODE:
+        return {REG_NODE, PLUS_NODE, TIMES_NODE, SHIFTL_NODE,
+                SHIFTR_NODE, BITOR_NODE, BITXOR_NODE, BITAND_NODE, BITNOT_NODE, MINUS_NODE};
+        break;
+    case PLUS_NODE:
+    case MINUS_NODE:
+    case TIMES_NODE:
+    case SHIFTL_NODE:
+    case SHIFTR_NODE:
+    case BITOR_NODE:
+    case BITXOR_NODE:
+    case BITAND_NODE:
+    case BITNOT_NODE:
+        return {REG_NODE, INPUT_NODE};
+        break;
+    default:
+        std::cerr << "Error: Unknown node tpye in productions functions.\n";
+        break;
+    }
+
+    return {};
+}
+
+RTLNode* produceNode(NODETAG production) {
+    switch (production) {
+    case PLUS_NODE:
+        return new PlusNode();
+        break;
+    case MINUS_NODE:
+        return new MinusNode();
+        break;
+    case TIMES_NODE:
+        return new TimesNode();
+        break;
+    case SHIFTL_NODE:
+        return new ShiftLeftNode();
+        break;
+    case SHIFTR_NODE:
+        return new ShiftRightNode();
+        break;
+    case BITOR_NODE:
+        return new BitwiseORNode();
+        break;
+    case BITXOR_NODE:
+        return new BitWiseXORNode();
+        break;
+    case BITAND_NODE:
+        return new BitwiseANDNode();
+        break;
+    case BITNOT_NODE:
+        return new BitWiseNOTNode();
+        break;
+    case REG_NODE:
+        return new RegNode();
+        break;
+    case INPUT_NODE:
+        return new InputNode();
+        break;
+    default:
+        std::cerr << "Error: Unknown production type in produceNode function.\n";
+        break;
+    }
+
+    return nullptr;
+}
+
+// replaces left most non terminal, call clone before
+WorkItem* Search::replaceNonTerm(RTLNode* root, const NonTermLocation& location, NODETAG production) {
+    if (root == nullptr || location.parent == nullptr) {
+        return nullptr;
+    }
+
+    WorkItem* newItem = nullptr;
+    RTLNode* newNode = produceNode(production);
+    switch (location.slot) {
+    case NonTermLocation::CHILD: {
+        if (location.parent->nodetag == REG_NODE) {
+            RegNode* cast = static_cast<RegNode*>(location.parent);
+            cast->Child = newNode;
+        } else if (location.parent->nodetag == OUTPUT_NODE) {
+            OutputNode* cast = static_cast<OutputNode*>(location.parent);
+            cast->Child = newNode;
+        }
+        newNode->parent = location.parent;
+        break;
+    }
+    case NonTermLocation::LEFT: {
+        BinaryNode* cast = static_cast<BinaryNode*>(location.parent);
+        cast->leftChild = newNode;
+        newNode->parent = location.parent;
+        break;
+    }
+    case NonTermLocation::RIGHT: {
+        BinaryNode* cast = static_cast<BinaryNode*>(location.parent);
+        cast->rightChild = newNode;
+        newNode->parent = location.parent;
+        break;
+    }
+    default:
+        std::cerr << "Error: Unknown slot in replaceNonTerm.\n";
+        return nullptr;
+        break;
+    }
+
+    return new WorkItem{root, 0, 0};
+}
+
+void Search::unroll(WorkItem* workItem) {
+    if (auto nonTerm = leftMostNonTerm(workItem->node)) {
+        std::vector<NODETAG> prods = productions(*nonTerm);
+        for (auto& prod : prods) {
+            RTLNode* cloned = clone(workItem->node);
+            auto loc = leftMostNonTerm(cloned);
+            WorkItem* item = replaceNonTerm(cloned, *loc, prod);
+            m_workList.push(*item);
+        }
+    }
+}
+
+RTLNode* Search::topDown(const std::vector<std::vector<int>>& inputs, const std::vector<int>& outputs) {
+    if (!m_workList.empty()) {
+        std::cerr << "Error: starting search with a non-empty worklist. You messed something up.\n";
+        return nullptr;
+    }
+
+    m_workList.push({new OutputNode(), 0, 0});
+    while (!m_workList.empty()) {
+        WorkItem curr = m_workList.top();
+        m_workList.pop();
+        if (isComplete(curr.node)) {
+            return curr.node;
+        }
+
+        unroll(&curr);
+    }
+
+    return nullptr;
+}

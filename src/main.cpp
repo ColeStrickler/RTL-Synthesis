@@ -3,6 +3,7 @@
 #include "node.hpp"
 #include "vm.hpp"
 #include "printer.hpp"
+#include "search.hpp"
 
 
 #include <iostream>
@@ -83,9 +84,10 @@ int main()
     //vm.PrintProgram();
     //printf("Result %d\n", vm.ExecuteProgram());
 
+    Search searcher;
+    auto out2 = searcher.topDown({{1},{2}, {3} },  {92, 16, 64});
 
-
-   std::string module = RTLModulePrint::PrintModule("TestModule", out);
+   std::string module = RTLModulePrint::PrintModule("TestModule", out2);
     WriteStringToFile("./test.scala", module);
 
 
