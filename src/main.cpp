@@ -87,7 +87,7 @@ int main()
     Search searcher;
     auto out2 = searcher.topDown({{1},{2}, {3} },  {92, 16, 64});
 
-   std::string module = RTLModulePrint::PrintModule("TestModule", out2);
+   std::string module = RTLModulePrint::PrintModule("TestModule", static_cast<OutputNode*>(out2));
     WriteStringToFile("./test.scala", module);
 
 
