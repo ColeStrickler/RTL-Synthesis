@@ -53,6 +53,18 @@ std::string OutputNode::Print(RTLModulePrint *mod_print)
 }
 
 
+std::string BitWiseNOTNode::Print(RTLModulePrint *mod_print)
+{
+    std::string ret = Child->Print(mod_print);
+    std::string child_name = mod_print->GetNodeName(Child);
+    mod_print->NameWireNode(this);
+    std::string wire_name = mod_print->GetNodeName(this);
+    mod_print->AddDecl("\tval " + wire_name + " = Wire(UInt(32.W))\n");
+    ret += "\t" + wire_name + " := ~" + child_name + "\n";
+    return ret;
+}
+
+
 std::string InputNode::Print(RTLModulePrint *mod_print)
 {
     std::string ret = "";

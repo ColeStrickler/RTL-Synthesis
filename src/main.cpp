@@ -85,8 +85,9 @@ int main()
     //printf("Result %d\n", vm.ExecuteProgram());
 
     Search searcher;
+    CostModel cm{32, 1200, 1500};
     auto start = std::chrono::high_resolution_clock::now();
-    auto out2 = searcher.topDown({{1},{2}}, {3});
+    auto out2 = searcher.topDown({{1},{2}}, {3}, cm);
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
     std::cout << "Time: " << duration.count() << " us\n";

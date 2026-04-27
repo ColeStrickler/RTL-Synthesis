@@ -158,16 +158,18 @@ public:
     void PropagateVal() override {val = leftChild->val & rightChild->val; inputs_received = 0; parent->inputs_received++; };
 };
 
-class BitWiseNOTNode : public BinaryNode
+class BitWiseNOTNode : public RTLNode
 {
 public:
-    BitWiseNOTNode() : BinaryNode(BITNOT_NODE)
+    BitWiseNOTNode() : RTLNode(BITNOT_NODE), Child(nullptr)
     {
         inputs_needed = 1;
     }
 
 
     void PropagateVal() override {val = ~Child->val; inputs_received = 0; parent->inputs_received++; };
+    virtual void Compile(VM* vm) override;
+    virtual std::string Print(RTLModulePrint* mod_print) override;
     RTLNode* Child;
 
 };
@@ -192,7 +194,7 @@ public:
 class OutputNode : public RTLNode
 {
 public:
-    OutputNode() : RTLNode(OUTPUT_NODE)
+    OutputNode() : RTLNode(OUTPUT_NODE), Child(nullptr)
     {
         inputs_needed = 1;
     }
@@ -211,7 +213,7 @@ public:
 class RegNode : public RTLNode
 {
 public:
-    RegNode() : RTLNode(REG_NODE) 
+    RegNode() : RTLNode(REG_NODE), Child(nullptr)
     {
         parent = nullptr; // explicitly null for single-child nodes
         inputs_needed = 1;

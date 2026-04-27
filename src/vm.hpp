@@ -31,7 +31,8 @@ enum class OPCODE : uint8_t {
     TIMES,
     DIV,
     SHIFT_LEFT,
-    SHIFT_RIGHT
+    SHIFT_RIGHT,
+    BIT_NOT
 };
 
 
@@ -54,6 +55,7 @@ inline std::string opcode_to_string(OPCODE op) {
 
         case OPCODE::SHIFT_LEFT:   return "SHIFT_LEFT";
         case OPCODE::SHIFT_RIGHT:  return "SHIFT_RIGHT";
+        case OPCODE::BIT_NOT:      return "BIT_NOT";
     }
 
     return "UNKNOWN_OPCODE";
@@ -85,6 +87,9 @@ inline OPCODE nodetag_to_opcode(NODETAG tag) {
 
         case NODETAG::SHIFTR_NODE:
             return OPCODE::SHIFT_RIGHT;
+
+        case NODETAG::BITNOT_NODE:
+            return OPCODE::BIT_NOT;
 
         default:
         {

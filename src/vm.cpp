@@ -118,6 +118,7 @@ int VM::ExecuteProgram()
             case OPCODE::TIMES:     {uint32_t b = PopStack(); uint32_t a = PopStack(); PushStack(a * b); break;}
             case OPCODE::SHIFT_LEFT:{uint32_t b = PopStack(); uint32_t a = PopStack(); PushStack(a << b); break;}
             case OPCODE::SHIFT_RIGHT:{uint32_t b = PopStack(); uint32_t a = PopStack(); PushStack(a >> b); break;}
+            case OPCODE::BIT_NOT:   {uint32_t a = PopStack(); PushStack(~a); break;}
             default:
             {
                 ReportError("Invalid opcode.");

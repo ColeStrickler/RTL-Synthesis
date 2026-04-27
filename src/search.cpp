@@ -357,17 +357,43 @@ WorkItem* Search::replaceNonTerm(RTLNode* root, const NonTermLocation& location,
         break;
     }
 
-    return new WorkItem{root, 0, 0};
+    return new WorkItem{root, 0, 0, 0};
 }
 
-void Search::unroll(WorkItem* workItem) {
+uint32_t combDelayToBoundary(RTLNode* node, const CostModel& costModel) {
+    uint32_t delay = 0;
+    RTLNode* curr = node->GetParent();
+    while (curr != nullptr) {
+        if (curr->nodetag == REG_NODE || curr->nodetag == OUTPUT_NODE) {
+            break;
+        }
+        delay += costModel.gateCost(curr->nodetag);
+        curr = curr->parent;
+    }
+
+    return delay;
+}
+
+void Search::unroll(WorkItem* workItem, const CostModel& costModel) {
     if (auto nonTerm = leftMostNonTerm(workItem->node)) {
         std::vector<NODETAG> prods = productions(*nonTerm);
         for (auto& prod : prods) {
             RTLNode* cloned = clone(workItem->node);
             auto loc = leftMostNonTerm(cloned);
             WorkItem item = *replaceNonTerm(cloned, *loc, prod);
-            m_workList.push(item);
+
+            if (prod == REG_NODE) {
+                item.totalCost += costModel.regCost;
+                item.combDelay = 0;
+            } else if (prod == INPUT_NODE) {
+                // NOTHING
+            } else {
+                item.combDelay = combDelayToBoundary(loc->parent, costModel) + costModel.gateCost(prod);
+                item.totalCost += costModel.gateCost(prod);
+            }
+
+            if (item.combDelay <= costModel.maxCombPath)
+                m_workList.push(item);
         }
     }
 }
@@ -379,12 +405,14 @@ void Search::collectInputNodes(RTLNode* node, std::vector<InputNode*>& out) {
         out.push_back(static_cast<InputNode*>(node));
         break;
     case OUTPUT_NODE:
+        //std::cout << static_cast<OutputNode*>(node)->Child << "\n";
         collectInputNodes(static_cast<OutputNode*>(node)->Child, out);
         break;
     case REG_NODE:
         collectInputNodes(static_cast<RegNode*>(node)->Child, out);
         break;
     case BITNOT_NODE:
+        //std::cout << node->nodetag << "\n";
         collectInputNodes(static_cast<BitWiseNOTNode*>(node)->Child, out);
         break;
     default: {
@@ -396,7 +424,7 @@ void Search::collectInputNodes(RTLNode* node, std::vector<InputNode*>& out) {
     }
 }
 
-RTLNode* Search::topDown(const std::vector<std::vector<int>>& inputs, const std::vector<int>& outputs) {
+RTLNode* Search::topDown(const std::vector<std::vector<int>>& inputs, const std::vector<int>& outputs, const CostModel& costModel) {
     if (!m_workList.empty()) {
         std::cerr << "Error: starting search with a non-empty worklist. You messed something up.\n";
         return nullptr;
@@ -414,7 +442,7 @@ RTLNode* Search::topDown(const std::vector<std::vector<int>>& inputs, const std:
             return curr.node;
         }
 
-        unroll(&curr);
+        unroll(&curr, costModel);
     }
 
     return nullptr;

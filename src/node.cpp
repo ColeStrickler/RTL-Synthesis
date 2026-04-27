@@ -204,11 +204,10 @@ bool Verifier::VMVerifier(int i)
         {
             if (VMVerifierSpecificPermutation(i+1, j))
                 return true;
-            
         }
         j++;
     }
-  
+
     return false;
 }
 
@@ -429,7 +428,6 @@ void BinaryNode::Compile(VM *vm)
     ////printff("%s->Compile()   0x%x, 0x%x\n", opcode_to_string(nodetag_to_opcode(nodetag)).c_str(), leftChild, rightChild);
     rightChild->Compile(vm);
     leftChild->Compile(vm);
-    
 
     vm->BinOpInst(nodetag_to_opcode(nodetag));
 }
@@ -445,7 +443,6 @@ void InputNode::Compile(VM *vm)
 
 void OutputNode::Compile(VM *vm)
 {
-    
     Child->Compile(vm);
     ////printff("ADding output inst\n");
     ////printff("here\n");
@@ -456,5 +453,11 @@ void OutputNode::Compile(VM *vm)
 void RegNode::Compile(VM *vm)
 {
     Child->Compile(vm);
+}
+
+void BitWiseNOTNode::Compile(VM *vm)
+{
+    Child->Compile(vm);
+    vm->BinOpInst(OPCODE::BIT_NOT);
 }
 
