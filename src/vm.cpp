@@ -27,8 +27,6 @@ void VM::Compile(std::vector<InputNode *> input_nodes)
 
     std::queue<RTLNode*> frontier;
 
-
-
         ////printf("here\n");
         int x = 0;
         for (auto& inode: input_nodes) // give input nodes values
@@ -48,7 +46,6 @@ void VM::Compile(std::vector<InputNode *> input_nodes)
         
         while (!frontier.empty())
         {
-                    
             auto node = frontier.front();
             frontier.pop();
             if (visited.count(node))
@@ -68,7 +65,7 @@ void VM::Compile(std::vector<InputNode *> input_nodes)
                 default:
                 {
                     visited.insert(node);
-                    frontier.push(node->GetParent());   
+                    frontier.push(node->GetParent());
                     break;
                 }
             }

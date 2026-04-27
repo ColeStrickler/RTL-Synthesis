@@ -21,6 +21,7 @@ RTLNode* Search::clone(RTLNode* toClone) {
             OutputNode* outputNode = static_cast<OutputNode*>(toClone);
             OutputNode* newOutputNode = new OutputNode();
             newOutputNode->Child = clone(outputNode->Child);
+            if (newOutputNode->Child) newOutputNode->Child->parent = newOutputNode;
             newNode = newOutputNode;
             break;
         }
@@ -28,6 +29,7 @@ RTLNode* Search::clone(RTLNode* toClone) {
             RegNode* regNode = static_cast<RegNode*>(toClone);
             RegNode* newRegNode = new RegNode();
             newRegNode->Child = clone(regNode->Child);
+            if (newRegNode->Child) newRegNode->Child->parent = newRegNode;
             newNode = newRegNode;
             break;
         }
@@ -36,6 +38,8 @@ RTLNode* Search::clone(RTLNode* toClone) {
             PlusNode* newPlusNode = new PlusNode();
             newPlusNode->leftChild = clone(plusNode->leftChild);
             newPlusNode->rightChild = clone(plusNode->rightChild);
+            if (newPlusNode->leftChild) newPlusNode->leftChild->parent = newPlusNode;
+            if (newPlusNode->rightChild) newPlusNode->rightChild->parent = newPlusNode;
             newNode = newPlusNode;
             break;
         }
@@ -44,6 +48,8 @@ RTLNode* Search::clone(RTLNode* toClone) {
             MinusNode* newMinusNode = new MinusNode();
             newMinusNode->leftChild = clone(minusNode->leftChild);
             newMinusNode->rightChild = clone(minusNode->rightChild);
+            if (newMinusNode->leftChild) newMinusNode->leftChild->parent = newMinusNode;
+            if (newMinusNode->rightChild) newMinusNode->rightChild->parent = newMinusNode;
             newNode = newMinusNode;
             break;
         }
@@ -52,6 +58,8 @@ RTLNode* Search::clone(RTLNode* toClone) {
             TimesNode* newTimesNode = new TimesNode();
             newTimesNode->leftChild = clone(timesNode->leftChild);
             newTimesNode->rightChild = clone(timesNode->rightChild);
+            if (newTimesNode->leftChild) newTimesNode->leftChild->parent = newTimesNode;
+            if (newTimesNode->rightChild) newTimesNode->rightChild->parent = newTimesNode;
             newNode = newTimesNode;
             break;
         }
@@ -60,6 +68,8 @@ RTLNode* Search::clone(RTLNode* toClone) {
             ShiftLeftNode* newShiftLeftNode = new ShiftLeftNode();
             newShiftLeftNode->leftChild = clone(shiftLeftNode->leftChild);
             newShiftLeftNode->rightChild = clone(shiftLeftNode->rightChild);
+            if (newShiftLeftNode->leftChild) newShiftLeftNode->leftChild->parent = newShiftLeftNode;
+            if (newShiftLeftNode->rightChild) newShiftLeftNode->rightChild->parent = newShiftLeftNode;
             newNode = newShiftLeftNode;
             break;
         }
@@ -68,6 +78,8 @@ RTLNode* Search::clone(RTLNode* toClone) {
             ShiftRightNode* newShiftRightNode = new ShiftRightNode();
             newShiftRightNode->leftChild = clone(shiftRightNode->leftChild);
             newShiftRightNode->rightChild = clone(shiftRightNode->rightChild);
+            if (newShiftRightNode->leftChild) newShiftRightNode->leftChild->parent = newShiftRightNode;
+            if (newShiftRightNode->rightChild) newShiftRightNode->rightChild->parent = newShiftRightNode;
             newNode = newShiftRightNode;
             break;
         }
@@ -76,6 +88,8 @@ RTLNode* Search::clone(RTLNode* toClone) {
             BitwiseORNode* newBitOrNode = new BitwiseORNode();
             newBitOrNode->leftChild = clone(bitOrNode->leftChild);
             newBitOrNode->rightChild = clone(bitOrNode->rightChild);
+            if (newBitOrNode->leftChild) newBitOrNode->leftChild->parent = newBitOrNode;
+            if (newBitOrNode->rightChild) newBitOrNode->rightChild->parent = newBitOrNode;
             newNode = newBitOrNode;
             break;
         }
@@ -84,6 +98,8 @@ RTLNode* Search::clone(RTLNode* toClone) {
             BitWiseXORNode* newBitXorNode = new BitWiseXORNode();
             newBitXorNode->leftChild = clone(bitXorNode->leftChild);
             newBitXorNode->rightChild = clone(bitXorNode->rightChild);
+            if (newBitXorNode->leftChild) newBitXorNode->leftChild->parent = newBitXorNode;
+            if (newBitXorNode->rightChild) newBitXorNode->rightChild->parent = newBitXorNode;
             newNode = newBitXorNode;
             break;
         }
@@ -92,6 +108,8 @@ RTLNode* Search::clone(RTLNode* toClone) {
             BitwiseANDNode* newBitAndNode = new BitwiseANDNode();
             newBitAndNode->leftChild = clone(bitAndNode->leftChild);
             newBitAndNode->rightChild = clone(bitAndNode->rightChild);
+            if (newBitAndNode->leftChild) newBitAndNode->leftChild->parent = newBitAndNode;
+            if (newBitAndNode->rightChild) newBitAndNode->rightChild->parent = newBitAndNode;
             newNode = newBitAndNode;
             break;
         }
@@ -99,6 +117,7 @@ RTLNode* Search::clone(RTLNode* toClone) {
             BitWiseNOTNode* bitNotNode = static_cast<BitWiseNOTNode*>(toClone);
             BitWiseNOTNode* newBitNotNode = new BitWiseNOTNode();
             newBitNotNode->Child = clone(bitNotNode->Child);
+            if (newBitNotNode->Child) newBitNotNode->Child->parent = newBitNotNode;
             newNode = newBitNotNode;
             break;
         }
@@ -339,17 +358,45 @@ void Search::unroll(WorkItem* workItem) {
     }
 }
 
+void Search::collectInputNodes(RTLNode* node, std::vector<InputNode*>& out) {
+    if (node == nullptr) return;
+    switch (node->nodetag) {
+    case INPUT_NODE:
+        out.push_back(static_cast<InputNode*>(node));
+        break;
+    case OUTPUT_NODE:
+        collectInputNodes(static_cast<OutputNode*>(node)->Child, out);
+        break;
+    case REG_NODE:
+        collectInputNodes(static_cast<RegNode*>(node)->Child, out);
+        break;
+    case BITNOT_NODE:
+        collectInputNodes(static_cast<BitWiseNOTNode*>(node)->Child, out);
+        break;
+    default: {
+        BinaryNode* b = static_cast<BinaryNode*>(node);
+        collectInputNodes(b->leftChild, out);
+        collectInputNodes(b->rightChild, out);
+        break;
+    }
+    }
+}
+
 RTLNode* Search::topDown(const std::vector<std::vector<int>>& inputs, const std::vector<int>& outputs) {
     if (!m_workList.empty()) {
         std::cerr << "Error: starting search with a non-empty worklist. You messed something up.\n";
         return nullptr;
     }
-
     m_workList.push({new OutputNode(), 0, 0});
     while (!m_workList.empty()) {
         WorkItem curr = m_workList.top();
         m_workList.pop();
-        if (isComplete(curr.node)) {
+        std::vector<InputNode*> liveInputs;
+        collectInputNodes(curr.node, liveInputs);
+        Verifier verify(inputs, outputs, liveInputs);
+        verify.SetMaxInputFanout(2);
+        if (isComplete(curr.node) && verify.VerifyVM()) {
+            std::cout << "SEARCH VERIFIED\n";
             return curr.node;
         }
 

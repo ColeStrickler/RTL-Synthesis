@@ -10,8 +10,6 @@
 class VM;
 class RTLModulePrint;
 
-
-
 enum NODETAG
 {
     RTL_NODE,
@@ -237,6 +235,7 @@ public:
    Verifier(const std::vector<std::vector<int>> &input, const std::vector<int> &output, std::vector<InputNode*> input_nodes);
     ~Verifier();
 
+    void setInputNodes(std::vector<InputNode*> input_nodes) { m_InputNodes = input_nodes; };
 
     bool Verify(int i);
     bool VerifyVM();
@@ -246,7 +245,7 @@ public:
 
     void BackTrackPermuteInputs(\
             std::vector<int>& input_vec, int input_count, std::vector<std::vector<int>>& ret, std::vector<int>& curr, std::unordered_map<int, int>& count);
-    
+
     void SetMaxInputFanout(int fanout) {max_input_fanout = fanout;}
 
 

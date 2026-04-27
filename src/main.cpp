@@ -85,23 +85,27 @@ int main()
     //printf("Result %d\n", vm.ExecuteProgram());
 
     Search searcher;
-    auto out2 = searcher.topDown({{1},{2}, {3} },  {92, 16, 64});
+    auto start = std::chrono::high_resolution_clock::now();
+    auto out2 = searcher.topDown({{2},{5}}, {3});
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    std::cout << "Time: " << duration.count() << " us\n";
 
    std::string module = RTLModulePrint::PrintModule("TestModule", static_cast<OutputNode*>(out2));
     WriteStringToFile("./test.scala", module);
 
 
 
-    auto start = std::chrono::high_resolution_clock::now();
-    Verifier verify({{1},{2}, {3} },  {92, 16, 64}, {in1, in2, in3, in4, in5, in6});
-    verify.SetMaxInputFanout(6);
-    if (verify.VerifyVM())
-        printf("OKAY\n");
-    else
-        printf("NOT OKAY\n");    
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    std::cout << "Time: " << duration.count() << " us\n";
+    // auto start = std::chrono::high_resolution_clock::now();
+    // Verifier verify({{1},{2}, {3} },  {92, 16, 64}, {in1, in2, in3, in4, in5, in6});
+    // verify.SetMaxInputFanout(6);
+    // if (verify.VerifyVM())
+    //     printf("OKAY\n");
+    // else
+    //     printf("NOT OKAY\n");    
+    // auto end = std::chrono::high_resolution_clock::now();
+    // auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    // std::cout << "Time: " << duration.count() << " us\n";
 
    //if (verify.Verify(0))
    //{

@@ -177,8 +177,7 @@ bool Verifier::VerifyVM()
 
     ////printff("Compiled\n");
        // vm.SetInputs({2,1,1, 1, 1, 1});
-    //vm.//printfProgram();
-
+    //m_VM->PrintProgram();
 
     return VMVerifier(0);
 }
@@ -193,7 +192,6 @@ bool Verifier::VMVerifier(int i)
     for (auto& input_combination: input_combination_indexes)
     {
         std::vector<uint32_t> input_vals;
-      //  ////printff("here\n");
         int x = 0;
         for (auto& inode: m_InputNodes) // give input nodes values
         {

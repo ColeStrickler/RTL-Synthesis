@@ -36,6 +36,7 @@ private:
     std::vector<NODETAG> productions(const NonTermLocation& location);
     WorkItem* replaceNonTerm(RTLNode* root, const NonTermLocation& location, NODETAG production);
     void unroll(WorkItem* workItem);
+    void collectInputNodes(RTLNode* node, std::vector<InputNode*>& out);
 };
 
 #endif
