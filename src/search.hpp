@@ -19,7 +19,7 @@ struct WorkItem {
     uint32_t cost;
 
     bool operator<(const WorkItem& other) const {
-        return cost < other.cost;
+        return cost > other.cost;
     }
 };
 

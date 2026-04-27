@@ -155,6 +155,7 @@ class BitwiseANDNode : public BinaryNode
 {
 public:
     BitwiseANDNode() : BinaryNode(BITAND_NODE) {inputs_needed = 2;}
+    void PropagateVal() override {val = leftChild->val & rightChild->val; inputs_received = 0; parent->inputs_received++; };
 };
 
 class BitWiseNOTNode : public BinaryNode

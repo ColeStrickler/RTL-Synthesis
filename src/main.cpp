@@ -86,7 +86,7 @@ int main()
 
     Search searcher;
     auto start = std::chrono::high_resolution_clock::now();
-    auto out2 = searcher.topDown({{2},{5}}, {3});
+    auto out2 = searcher.topDown({{1},{2}}, {3});
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
     std::cout << "Time: " << duration.count() << " us\n";
@@ -102,7 +102,7 @@ int main()
     // if (verify.VerifyVM())
     //     printf("OKAY\n");
     // else
-    //     printf("NOT OKAY\n");    
+    //     printf("NOT OKAY\n");
     // auto end = std::chrono::high_resolution_clock::now();
     // auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
     // std::cout << "Time: " << duration.count() << " us\n";

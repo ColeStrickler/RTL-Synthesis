@@ -156,10 +156,14 @@ bool Search::isComplete(RTLNode* node) {
     case SHIFTR_NODE:
     case BITOR_NODE:
     case BITXOR_NODE:
-    case BITAND_NODE:
-    case BITNOT_NODE: {
+    case BITAND_NODE: {
         BinaryNode* cast = static_cast<BinaryNode*>(node);
         return isComplete(cast->leftChild) && isComplete(cast->rightChild);
+        break;
+    }
+    case BITNOT_NODE: {
+        BitWiseNOTNode* cast = static_cast<BitWiseNOTNode*>(node);
+        return isComplete(cast->Child);
         break;
     }
     default:
@@ -190,7 +194,7 @@ std::optional<NonTermLocation> Search::leftMostNonTerm(RTLNode* node) {
     case REG_NODE: {
         RegNode* cast = static_cast<RegNode*>(node);
         if (cast->Child == nullptr) {
-            return NonTermLocation{node, NonTermLocation::CHILD}    ;
+            return NonTermLocation{node, NonTermLocation::CHILD};
         }
         return leftMostNonTerm(cast->Child);
         break;
@@ -202,8 +206,7 @@ std::optional<NonTermLocation> Search::leftMostNonTerm(RTLNode* node) {
     case SHIFTR_NODE:
     case BITOR_NODE:
     case BITXOR_NODE:
-    case BITAND_NODE:
-    case BITNOT_NODE: {
+    case BITAND_NODE: {
         BinaryNode* cast = static_cast<BinaryNode*>(node);
         if (cast->leftChild == nullptr) {
             return NonTermLocation{node, NonTermLocation::LEFT};
@@ -218,6 +221,14 @@ std::optional<NonTermLocation> Search::leftMostNonTerm(RTLNode* node) {
             return NonTermLocation{node, NonTermLocation::RIGHT};
         }
         return leftMostNonTerm(cast->rightChild);
+        break;
+    }
+    case BITNOT_NODE: {
+        BitWiseNOTNode* cast = static_cast<BitWiseNOTNode*>(node);
+        if (cast->Child == nullptr) {
+            return NonTermLocation{node, NonTermLocation::CHILD};
+        }
+        return leftMostNonTerm(cast->Child);
         break;
     }
     default:
@@ -321,6 +332,9 @@ WorkItem* Search::replaceNonTerm(RTLNode* root, const NonTermLocation& location,
         } else if (location.parent->nodetag == OUTPUT_NODE) {
             OutputNode* cast = static_cast<OutputNode*>(location.parent);
             cast->Child = newNode;
+        } else if (location.parent->nodetag == BITNOT_NODE) {
+            BitWiseNOTNode* cast = static_cast<BitWiseNOTNode*>(location.parent);
+            cast->Child = newNode;
         }
         newNode->parent = location.parent;
         break;
@@ -352,8 +366,8 @@ void Search::unroll(WorkItem* workItem) {
         for (auto& prod : prods) {
             RTLNode* cloned = clone(workItem->node);
             auto loc = leftMostNonTerm(cloned);
-            WorkItem* item = replaceNonTerm(cloned, *loc, prod);
-            m_workList.push(*item);
+            WorkItem item = *replaceNonTerm(cloned, *loc, prod);
+            m_workList.push(item);
         }
     }
 }
