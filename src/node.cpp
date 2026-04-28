@@ -452,7 +452,13 @@ void OutputNode::Compile(VM *vm)
 
 void RegNode::Compile(VM *vm)
 {
+
+
+    if (compiled)
+        return;
+    //printf("COMPILING 0x%x\n", this);
     Child->Compile(vm);
+    compiled = true;
 }
 
 void BitWiseNOTNode::Compile(VM *vm)

@@ -56,6 +56,8 @@ public:
         return;
     }
 
+    virtual std::string PrintExpr() = 0;
+
     virtual std::string Print(RTLModulePrint* mod_print) = 0;
 
 
@@ -78,7 +80,22 @@ public:
     {
         inputs_needed = 2;
     }
-
+    virtual std::string PrintExpr() {
+        std::string op;
+        switch (nodetag) {
+            case NODETAG::BITAND_NODE:op = "&";break;
+            case NODETAG::BITOR_NODE:op = "|";break;
+            case NODETAG::BITXOR_NODE:op = "^";break;
+            case NODETAG::MINUS_NODE:op = "-";break;
+            case NODETAG::PLUS_NODE:op = "+";break;
+            case NODETAG::SHIFTL_NODE:op = "<<";break;
+            case NODETAG::SHIFTR_NODE:op = ">>";break;
+            case NODETAG::TIMES_NODE:op = "*";break;
+            default:
+                assert(false);
+        }
+        return leftChild->PrintExpr() + op + rightChild->PrintExpr();
+    }
     virtual void Compile(VM* vm) override;
     virtual std::string Print(RTLModulePrint* mod_print) override;
 
@@ -166,7 +183,7 @@ public:
         inputs_needed = 1;
     }
 
-
+        virtual std::string PrintExpr() { return "~" + Child->PrintExpr();}
     void PropagateVal() override {val = ~Child->val; inputs_received = 0; parent->inputs_received++; };
     virtual void Compile(VM* vm) override;
     virtual std::string Print(RTLModulePrint* mod_print) override;
@@ -186,6 +203,8 @@ public:
     virtual void Compile(VM* vm) override;
     virtual std::string Print(RTLModulePrint* mod_print) override;
 
+    virtual std::string PrintExpr() { return "Reg(" + std::string("in") + ")";}
+
     void SetVal(int value) {val = value; }
 
 };
@@ -202,6 +221,7 @@ public:
     void PropagateVal() override {val = Child->val; inputs_received = 0;};
     virtual void Compile(VM* vm) override;
 
+    virtual std::string PrintExpr() { return "Out(" + Child->PrintExpr() + ")";}
     void Search();
     virtual std::string Print(RTLModulePrint* mod_print) override;
     RTLNode* Child;
@@ -217,11 +237,16 @@ public:
     {
         parent = nullptr; // explicitly null for single-child nodes
         inputs_needed = 1;
+        compiled = false;
     }
+
+    virtual std::string PrintExpr() { return "Reg(" + Child->PrintExpr() + ")";}
+
     virtual void Compile(VM* vm) override;
     void PropagateVal() override {val = Child->val; inputs_received = 0; parent->inputs_received++; };
     virtual std::string Print(RTLModulePrint* mod_print) override;
     RTLNode* Child;
+    bool compiled;
 };
 
 

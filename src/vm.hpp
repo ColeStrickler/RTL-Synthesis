@@ -111,7 +111,7 @@ public:
 
 
 
-
+    int ExecuteProgramDebug();
     OPCODE IncProgramCounter();
     uint8_t ReadProgramOperand();
     uint32_t ReadReg(uint8_t reg);
@@ -120,7 +120,7 @@ public:
     uint32_t PopStack();
 
     void SetInput(uint8_t input, uint32_t val);
-    uint32_t GetInput(uint8_t input);
+    uint32_t GetInput(uint8_t input, bool debug = false);
 
     void ReportError(const char* msg);
 

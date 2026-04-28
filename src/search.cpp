@@ -263,7 +263,7 @@ std::vector<NODETAG> Search::productions(const NonTermLocation& location) {
     case BITXOR_NODE:
     case BITAND_NODE:
     case BITNOT_NODE:
-        return {REG_NODE, INPUT_NODE};
+        return {PLUS_NODE, MINUS_NODE, TIMES_NODE, SHIFTL_NODE, SHIFTR_NODE, BITOR_NODE, BITXOR_NODE, BITAND_NODE, BITNOT_NODE,REG_NODE, INPUT_NODE};
         break;
     default:
         std::cerr << "Error: Unknown node tpye in productions functions.\n";
@@ -437,7 +437,12 @@ RTLNode* Search::topDown(const std::vector<std::vector<int>>& inputs, const std:
         collectInputNodes(curr.node, liveInputs);
         Verifier verify(inputs, outputs, liveInputs);
         verify.SetMaxInputFanout(2);
-        if (isComplete(curr.node) && verify.VerifyVM()) {
+        
+
+        bool complete = isComplete(curr.node);
+        if (complete)
+            std::cout << curr.node->PrintExpr() << std::endl;
+        if (complete && verify.VerifyVM()) {
             std::cout << "SEARCH VERIFIED\n";
             return curr.node;
         }
