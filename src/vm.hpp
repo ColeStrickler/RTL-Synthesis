@@ -31,7 +31,8 @@ enum class OPCODE : uint8_t {
     TIMES,
     DIV,
     SHIFT_LEFT,
-    SHIFT_RIGHT
+    SHIFT_RIGHT,
+    BIT_NOT
 };
 
 
@@ -54,6 +55,7 @@ inline std::string opcode_to_string(OPCODE op) {
 
         case OPCODE::SHIFT_LEFT:   return "SHIFT_LEFT";
         case OPCODE::SHIFT_RIGHT:  return "SHIFT_RIGHT";
+        case OPCODE::BIT_NOT:      return "BIT_NOT";
     }
 
     return "UNKNOWN_OPCODE";
@@ -86,6 +88,9 @@ inline OPCODE nodetag_to_opcode(NODETAG tag) {
         case NODETAG::SHIFTR_NODE:
             return OPCODE::SHIFT_RIGHT;
 
+        case NODETAG::BITNOT_NODE:
+            return OPCODE::BIT_NOT;
+
         default:
         {
             //printf("nodetag_to_opcode() received bad tag %d\n", tag);
@@ -106,7 +111,7 @@ public:
 
 
 
-
+    int ExecuteProgramDebug();
     OPCODE IncProgramCounter();
     uint8_t ReadProgramOperand();
     uint32_t ReadReg(uint8_t reg);
@@ -115,7 +120,7 @@ public:
     uint32_t PopStack();
 
     void SetInput(uint8_t input, uint32_t val);
-    uint32_t GetInput(uint8_t input);
+    uint32_t GetInput(uint8_t input, bool debug = false);
 
     void ReportError(const char* msg);
 
@@ -134,6 +139,7 @@ public:
 
 
     // Compile Info
+    uint8_t verifyInputNodes;
     int m_CurrentInstruction;
     uint8_t m_NumInputs;
     uint32_t m_ActiveRegisters;

@@ -172,13 +172,12 @@ bool Verifier::VerifyVM()
     m_VM->Compile(m_InputNodes);
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    std::cout << "Compile Time: " << duration.count() << " us\n";
+   //std::cout << "Compile Time: " << duration.count() << " us\n";
 
 
     ////printff("Compiled\n");
        // vm.SetInputs({2,1,1, 1, 1, 1});
-    //vm.//printfProgram();
-
+    //m_VM->PrintProgram();
 
     return VMVerifier(0);
 }
@@ -193,7 +192,6 @@ bool Verifier::VMVerifier(int i)
     for (auto& input_combination: input_combination_indexes)
     {
         std::vector<uint32_t> input_vals;
-      //  ////printff("here\n");
         int x = 0;
         for (auto& inode: m_InputNodes) // give input nodes values
         {
@@ -202,15 +200,15 @@ bool Verifier::VMVerifier(int i)
         }
         m_VM->SetInputs(input_vals);
         int res = m_VM->ExecuteProgram();
+        //printf("res %d vs %d\n", res, m_Output[i]);
         if (res == m_Output[i])
         {
             if (VMVerifierSpecificPermutation(i+1, j))
                 return true;
-            
         }
         j++;
     }
-  
+
     return false;
 }
 
@@ -431,7 +429,6 @@ void BinaryNode::Compile(VM *vm)
     ////printff("%s->Compile()   0x%x, 0x%x\n", opcode_to_string(nodetag_to_opcode(nodetag)).c_str(), leftChild, rightChild);
     rightChild->Compile(vm);
     leftChild->Compile(vm);
-    
 
     vm->BinOpInst(nodetag_to_opcode(nodetag));
 }
@@ -447,7 +444,6 @@ void InputNode::Compile(VM *vm)
 
 void OutputNode::Compile(VM *vm)
 {
-    
     Child->Compile(vm);
     ////printff("ADding output inst\n");
     ////printff("here\n");
@@ -457,6 +453,18 @@ void OutputNode::Compile(VM *vm)
 
 void RegNode::Compile(VM *vm)
 {
+
+
+    if (compiled)
+        return;
+    //printf("COMPILING 0x%x\n", this);
     Child->Compile(vm);
+    compiled = true;
+}
+
+void BitWiseNOTNode::Compile(VM *vm)
+{
+    Child->Compile(vm);
+    vm->BinOpInst(OPCODE::BIT_NOT);
 }
 

@@ -10,8 +10,6 @@
 class VM;
 class RTLModulePrint;
 
-
-
 enum NODETAG
 {
     RTL_NODE,
@@ -58,6 +56,8 @@ public:
         return;
     }
 
+    virtual std::string PrintExpr() = 0;
+
     virtual std::string Print(RTLModulePrint* mod_print) = 0;
 
 
@@ -80,7 +80,22 @@ public:
     {
         inputs_needed = 2;
     }
-
+    virtual std::string PrintExpr() {
+        std::string op;
+        switch (nodetag) {
+            case NODETAG::BITAND_NODE:op = "&";break;
+            case NODETAG::BITOR_NODE:op = "|";break;
+            case NODETAG::BITXOR_NODE:op = "^";break;
+            case NODETAG::MINUS_NODE:op = "-";break;
+            case NODETAG::PLUS_NODE:op = "+";break;
+            case NODETAG::SHIFTL_NODE:op = "<<";break;
+            case NODETAG::SHIFTR_NODE:op = ">>";break;
+            case NODETAG::TIMES_NODE:op = "*";break;
+            default:
+                assert(false);
+        }
+        return "(" + leftChild->PrintExpr() + op + rightChild->PrintExpr() + ")";
+    }
     virtual void Compile(VM* vm) override;
     virtual std::string Print(RTLModulePrint* mod_print) override;
 
@@ -157,18 +172,21 @@ class BitwiseANDNode : public BinaryNode
 {
 public:
     BitwiseANDNode() : BinaryNode(BITAND_NODE) {inputs_needed = 2;}
+    void PropagateVal() override {val = leftChild->val & rightChild->val; inputs_received = 0; parent->inputs_received++; };
 };
 
-class BitWiseNOTNode : public BinaryNode
+class BitWiseNOTNode : public RTLNode
 {
 public:
-    BitWiseNOTNode() : BinaryNode(BITNOT_NODE)
+    BitWiseNOTNode() : RTLNode(BITNOT_NODE), Child(nullptr)
     {
         inputs_needed = 1;
     }
 
-
+        virtual std::string PrintExpr() { return "~" + Child->PrintExpr();}
     void PropagateVal() override {val = ~Child->val; inputs_received = 0; parent->inputs_received++; };
+    virtual void Compile(VM* vm) override;
+    virtual std::string Print(RTLModulePrint* mod_print) override;
     RTLNode* Child;
 
 };
@@ -185,6 +203,8 @@ public:
     virtual void Compile(VM* vm) override;
     virtual std::string Print(RTLModulePrint* mod_print) override;
 
+    virtual std::string PrintExpr() { return  std::string("in");}
+
     void SetVal(int value) {val = value; }
 
 };
@@ -193,7 +213,7 @@ public:
 class OutputNode : public RTLNode
 {
 public:
-    OutputNode() : RTLNode(OUTPUT_NODE)
+    OutputNode() : RTLNode(OUTPUT_NODE), Child(nullptr)
     {
         inputs_needed = 1;
     }
@@ -201,6 +221,7 @@ public:
     void PropagateVal() override {val = Child->val; inputs_received = 0;};
     virtual void Compile(VM* vm) override;
 
+    virtual std::string PrintExpr() { return "Out(" + Child->PrintExpr() + ")";}
     void Search();
     virtual std::string Print(RTLModulePrint* mod_print) override;
     RTLNode* Child;
@@ -212,15 +233,20 @@ public:
 class RegNode : public RTLNode
 {
 public:
-    RegNode() : RTLNode(REG_NODE) 
+    RegNode() : RTLNode(REG_NODE), Child(nullptr)
     {
         parent = nullptr; // explicitly null for single-child nodes
         inputs_needed = 1;
+        compiled = false;
     }
+
+    virtual std::string PrintExpr() { return "Reg(" + Child->PrintExpr() + ")";}
+
     virtual void Compile(VM* vm) override;
     void PropagateVal() override {val = Child->val; inputs_received = 0; parent->inputs_received++; };
     virtual std::string Print(RTLModulePrint* mod_print) override;
     RTLNode* Child;
+    bool compiled;
 };
 
 
@@ -237,6 +263,7 @@ public:
    Verifier(const std::vector<std::vector<int>> &input, const std::vector<int> &output, std::vector<InputNode*> input_nodes);
     ~Verifier();
 
+    void setInputNodes(std::vector<InputNode*> input_nodes) { m_InputNodes = input_nodes; };
 
     bool Verify(int i);
     bool VerifyVM();
@@ -246,7 +273,7 @@ public:
 
     void BackTrackPermuteInputs(\
             std::vector<int>& input_vec, int input_count, std::vector<std::vector<int>>& ret, std::vector<int>& curr, std::unordered_map<int, int>& count);
-    
+
     void SetMaxInputFanout(int fanout) {max_input_fanout = fanout;}
 
 

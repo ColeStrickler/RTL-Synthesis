@@ -12,7 +12,7 @@ SRC_DIR = ./src
 
 
 # Compilation flags
-CXXFLAGS = $(INCLUDE_DIR) -I$(DTL_DIR) -O1 -g -D __aarch64__ -std=c++17 -pthread
+CXXFLAGS = $(INCLUDE_DIR) -I$(DTL_DIR) -O3 -g -D __aarch64__ -std=c++17 -pthread #-fsanitize=address -DDEBUG
 
 # C++ source files
 CPP_SOURCES = $(wildcard $(SRC_DIR)/*.cpp) 
@@ -25,14 +25,16 @@ all:  $(OUTPUT)
 
 # Link final binary
 $(OUTPUT): $(OBJS)
-	$(CXX) $(CXXFLAGS) $(OBJS) -L$(DTL_DIR) -ldtl -o $@
+	$(CXX) $(CXXFLAGS) $(OBJS) -L$(DTL_DIR) -ldtl -g -o $@
 
 
 run: $(OUTPUT)
 	chmod +x ./$(OUTPUT)
 	./$(OUTPUT)
 
-
+debug: $(OUTPUT)
+	chmod +x ./$(OUTPUT)
+	gdb ./$(OUTPUT)
 
 # Compile .cpp files
 %.o: %.cpp

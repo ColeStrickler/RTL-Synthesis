@@ -12,10 +12,10 @@ class TestModule extends Module {val io = IO(new Bundle {
 	val wire2 = Wire(UInt(32.W))
 	val wire3 = Wire(UInt(32.W))
 	val wire4 = Wire(UInt(32.W))
-	wire2 := io.input4 + io.input3
-	wire3 := io.input5 * wire2
-	wire0 := io.input1 + io.input0
-	wire1 := io.input2 * wire0
-	wire4 := wire3 + wire1
+	wire3 := io.input5 * io.input4
+	wire1 := io.input3 * io.input2
+	wire0 := io.input1 * io.input0
+	wire2 := wire1 + wire0
+	wire4 := wire3 + wire2
 	io.output := wire4
 }
