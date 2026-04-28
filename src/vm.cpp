@@ -20,7 +20,9 @@ VM::~VM()
 
 void VM::Compile(std::vector<InputNode *> input_nodes)
 {
-
+    verifyInputNodes = input_nodes.size();
+    if (input_nodes.size() >= MAX_INPUT_SIZE)
+        return;
 
     std::unordered_map<int, RegNode*> node_map;
     std::vector<RTLNode*> currentRegNodes; // or outpuyt node
@@ -41,7 +43,6 @@ void VM::Compile(std::vector<InputNode *> input_nodes)
         std::unordered_set<RTLNode*> visited;
     while (!done)
     {
-        
         currentRegNodes.clear();
         
         while (!frontier.empty() && !done)
@@ -102,7 +103,8 @@ void VM::CompileRegNode(RegNode *reg)
 
 int VM::ExecuteProgram()
 {
-
+    if (verifyInputNodes >= MAX_INPUT_SIZE)
+        return 0;
     //printf("Program Size %d\n", m_ActiveProgramSize);
 
     OPCODE current_op;
@@ -367,13 +369,13 @@ uint32_t VM::GetInput(uint8_t input, bool debug)
 {
        
 #ifdef DEBUG
-    if (!(input <= MAX_INPUT_SIZE) && debug)
+    if (!(input < MAX_INPUT_SIZE) && debug)
     {
         ExecuteProgramDebug();
         assert(input <= MAX_INPUT_SIZE);
     }
 #endif
-    if (!(input <= MAX_INPUT_SIZE))
+    if (!(input < MAX_INPUT_SIZE))
     {
         return 0;
     }
@@ -392,7 +394,8 @@ void VM::SetInputs(const std::vector<uint32_t> &ivals)
 #ifdef DEBUG
     assert(ivals.size() <= m_NumInputs);
 #endif
-    
+    if (ivals.size() > MAX_INPUT_SIZE)
+        return;
     for (int i = 0; i < ivals.size(); i++)
     {
         m_Inputs[i] = ivals[i];
@@ -423,6 +426,7 @@ void VM::PrintProgram()
 
 void VM::PushInputInst(uint8_t input)
 {
+    printf("INPUT %d\n", input);
     m_Program[m_ActiveProgramSize++] = static_cast<uint8_t>(OPCODE::PUSH_INPUT);
     m_Program[m_ActiveProgramSize++] = input;
 }

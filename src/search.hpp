@@ -19,11 +19,11 @@ struct CostModel {
             case MINUS_NODE: return nBits * 10;
             case TIMES_NODE: return nBits * 30;
             case SHIFTL_NODE:
-            case SHIFTR_NODE: return nBits * 5;
+            case SHIFTR_NODE: return nBits * 10;
             case BITAND_NODE:
             case BITOR_NODE:
             case BITXOR_NODE:
-            case BITNOT_NODE: return nBits * 2;
+            case BITNOT_NODE: return nBits * 10;
             default: return 0;
         }
     }

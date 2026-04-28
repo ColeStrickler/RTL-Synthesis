@@ -251,8 +251,9 @@ std::vector<NODETAG> Search::productions(const NonTermLocation& location) {
                 SHIFTR_NODE, BITOR_NODE, BITXOR_NODE, BITAND_NODE, BITNOT_NODE, MINUS_NODE};
         break;
     case OUTPUT_NODE:
-        return {REG_NODE, PLUS_NODE, TIMES_NODE, SHIFTL_NODE,
-                SHIFTR_NODE, BITOR_NODE, BITXOR_NODE, BITAND_NODE, BITNOT_NODE, MINUS_NODE};
+      //  printf("OUTPUTNODE PROD\n");
+        return {PLUS_NODE, TIMES_NODE, SHIFTL_NODE,
+                SHIFTR_NODE, BITOR_NODE, BITXOR_NODE, BITAND_NODE, BITNOT_NODE, MINUS_NODE,REG_NODE};
         break;
     case PLUS_NODE:
     case MINUS_NODE:
@@ -263,7 +264,7 @@ std::vector<NODETAG> Search::productions(const NonTermLocation& location) {
     case BITXOR_NODE:
     case BITAND_NODE:
     case BITNOT_NODE:
-        return {PLUS_NODE, MINUS_NODE, TIMES_NODE, SHIFTL_NODE, SHIFTR_NODE, BITOR_NODE, BITXOR_NODE, BITAND_NODE, BITNOT_NODE,REG_NODE, INPUT_NODE};
+        return {INPUT_NODE,REG_NODE};
         break;
     default:
         std::cerr << "Error: Unknown node tpye in productions functions.\n";
@@ -324,6 +325,7 @@ WorkItem* Search::replaceNonTerm(RTLNode* root, const NonTermLocation& location,
 
     WorkItem* newItem = nullptr;
     RTLNode* newNode = produceNode(production);
+   // printf("NODETAG: %d\n", newNode->nodetag);
     switch (location.slot) {
     case NonTermLocation::CHILD: {
         if (location.parent->nodetag == REG_NODE) {
@@ -388,7 +390,7 @@ void Search::unroll(WorkItem* workItem, const CostModel& costModel) {
             } else if (prod == INPUT_NODE) {
                 // NOTHING
             } else {
-                item.combDelay = combDelayToBoundary(loc->parent, costModel) + costModel.gateCost(prod);
+                item.combDelay = 0; //combDelayToBoundary(loc->parent, costModel) + costModel.gateCost(prod);
                 item.totalCost += costModel.gateCost(prod);
             }
 
@@ -396,6 +398,7 @@ void Search::unroll(WorkItem* workItem, const CostModel& costModel) {
                 m_workList.push(item);
         }
     }
+  //  printf("worklist size %d\n", m_workList.size());
 }
 
 void Search::collectInputNodes(RTLNode* node, std::vector<InputNode*>& out) {

@@ -139,6 +139,7 @@ public:
 
 
     // Compile Info
+    uint8_t verifyInputNodes;
     int m_CurrentInstruction;
     uint8_t m_NumInputs;
     uint32_t m_ActiveRegisters;

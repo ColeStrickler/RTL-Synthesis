@@ -103,7 +103,7 @@ int main()
     Search searcher;
     CostModel cm{32, 1200, 1500};
     auto start = std::chrono::high_resolution_clock::now();
-    auto out2 = searcher.topDown({{3, 5,2},{5, 5,2}, {6, 6,2}}, {17,27,38}, cm);
+    auto out2 = searcher.topDown({{3, 5,1}, {4,4,1}, {6,2,1}, {1,1,1}, {1,2,1}}, {9, 9,9, 3, 4}, cm);
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
     std::cout << "Time: " << duration.count() << " us\n";

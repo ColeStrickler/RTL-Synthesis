@@ -172,7 +172,7 @@ bool Verifier::VerifyVM()
     m_VM->Compile(m_InputNodes);
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    std::cout << "Compile Time: " << duration.count() << " us\n";
+   //std::cout << "Compile Time: " << duration.count() << " us\n";
 
 
     ////printff("Compiled\n");
@@ -200,6 +200,7 @@ bool Verifier::VMVerifier(int i)
         }
         m_VM->SetInputs(input_vals);
         int res = m_VM->ExecuteProgram();
+        //printf("res %d vs %d\n", res, m_Output[i]);
         if (res == m_Output[i])
         {
             if (VMVerifierSpecificPermutation(i+1, j))
