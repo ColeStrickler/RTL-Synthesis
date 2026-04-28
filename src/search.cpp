@@ -252,7 +252,7 @@ std::vector<NODETAG> Search::productions(const NonTermLocation& location) {
         break;
     case OUTPUT_NODE:
       //  printf("OUTPUTNODE PROD\n");
-        return {PLUS_NODE, TIMES_NODE, SHIFTL_NODE,
+        return {INPUT_NODE,PLUS_NODE, TIMES_NODE, SHIFTL_NODE,
                 SHIFTR_NODE, BITOR_NODE, BITXOR_NODE, BITAND_NODE, BITNOT_NODE, MINUS_NODE,REG_NODE};
         break;
     case PLUS_NODE:
@@ -264,7 +264,8 @@ std::vector<NODETAG> Search::productions(const NonTermLocation& location) {
     case BITXOR_NODE:
     case BITAND_NODE:
     case BITNOT_NODE:
-        return {INPUT_NODE,REG_NODE};
+        return {INPUT_NODE,PLUS_NODE, TIMES_NODE, SHIFTL_NODE,
+                SHIFTR_NODE, BITOR_NODE, BITXOR_NODE, BITAND_NODE, BITNOT_NODE, MINUS_NODE,REG_NODE};
         break;
     default:
         std::cerr << "Error: Unknown node tpye in productions functions.\n";
@@ -383,6 +384,8 @@ void Search::unroll(WorkItem* workItem, const CostModel& costModel) {
             RTLNode* cloned = clone(workItem->node);
             auto loc = leftMostNonTerm(cloned);
             WorkItem item = *replaceNonTerm(cloned, *loc, prod);
+            item.combDelay= workItem->combDelay;
+            item.totalCost = workItem->totalCost;
 
             if (prod == REG_NODE) {
                 item.totalCost += costModel.regCost;
@@ -390,8 +393,9 @@ void Search::unroll(WorkItem* workItem, const CostModel& costModel) {
             } else if (prod == INPUT_NODE) {
                 // NOTHING
             } else {
-                item.combDelay = 0; //combDelayToBoundary(loc->parent, costModel) + costModel.gateCost(prod);
-                item.totalCost += costModel.gateCost(prod);
+                item.combDelay = combDelayToBoundary(loc->parent, costModel) + costModel.gateCost(prod);
+                item.totalCost +=  costModel.gateCost(prod);
+               // printf("item cost %d\n", item.totalCost);
             }
 
             if (item.combDelay <= costModel.maxCombPath)
@@ -426,7 +430,8 @@ void Search::collectInputNodes(RTLNode* node, std::vector<InputNode*>& out) {
     }
     }
 }
-
+#define MAX_INPUT_FANOUT 1
+#define MIN_INPUT_FANOUT 1
 RTLNode* Search::topDown(const std::vector<std::vector<int>>& inputs, const std::vector<int>& outputs, const CostModel& costModel) {
     if (!m_workList.empty()) {
         std::cerr << "Error: starting search with a non-empty worklist. You messed something up.\n";
@@ -438,8 +443,19 @@ RTLNode* Search::topDown(const std::vector<std::vector<int>>& inputs, const std:
         m_workList.pop();
         std::vector<InputNode*> liveInputs;
         collectInputNodes(curr.node, liveInputs);
+        if (liveInputs.size() > MAX_INPUT_FANOUT*inputs[0].size())
+            continue;
+        
+
+
+        if (liveInputs.size() < inputs[0].size()*MIN_INPUT_FANOUT)
+        {
+            unroll(&curr, costModel);
+            continue;
+        }
+
         Verifier verify(inputs, outputs, liveInputs);
-        verify.SetMaxInputFanout(2);
+        verify.SetMaxInputFanout(1);
         
 
         bool complete = isComplete(curr.node);
@@ -450,6 +466,8 @@ RTLNode* Search::topDown(const std::vector<std::vector<int>>& inputs, const std:
             return curr.node;
         }
 
+
+        //printf("worklist size %d\n", m_workList.size());
         unroll(&curr, costModel);
     }
 

@@ -426,7 +426,7 @@ void VM::PrintProgram()
 
 void VM::PushInputInst(uint8_t input)
 {
-    printf("INPUT %d\n", input);
+   // printf("INPUT %d\n", input);
     m_Program[m_ActiveProgramSize++] = static_cast<uint8_t>(OPCODE::PUSH_INPUT);
     m_Program[m_ActiveProgramSize++] = input;
 }

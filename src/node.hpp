@@ -94,7 +94,7 @@ public:
             default:
                 assert(false);
         }
-        return leftChild->PrintExpr() + op + rightChild->PrintExpr();
+        return "(" + leftChild->PrintExpr() + op + rightChild->PrintExpr() + ")";
     }
     virtual void Compile(VM* vm) override;
     virtual std::string Print(RTLModulePrint* mod_print) override;
@@ -203,7 +203,7 @@ public:
     virtual void Compile(VM* vm) override;
     virtual std::string Print(RTLModulePrint* mod_print) override;
 
-    virtual std::string PrintExpr() { return "Reg(" + std::string("in") + ")";}
+    virtual std::string PrintExpr() { return  std::string("in");}
 
     void SetVal(int value) {val = value; }
 

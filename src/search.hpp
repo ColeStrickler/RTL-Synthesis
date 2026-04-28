@@ -16,8 +16,8 @@ struct CostModel {
     uint32_t gateCost(NODETAG tag) const {
         switch (tag) {
             case PLUS_NODE:
-            case MINUS_NODE: return nBits * 10;
-            case TIMES_NODE: return nBits * 30;
+            case MINUS_NODE: return nBits * 8;
+            case TIMES_NODE: return nBits * 7;
             case SHIFTL_NODE:
             case SHIFTR_NODE: return nBits * 10;
             case BITAND_NODE:
