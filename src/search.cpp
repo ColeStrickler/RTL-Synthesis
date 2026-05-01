@@ -1,4 +1,6 @@
 #include <iostream>
+#include <thread>
+#include <mutex>
 
 #include "search.hpp"
 
@@ -377,13 +379,65 @@ uint32_t combDelayToBoundary(RTLNode* node, const CostModel& costModel) {
     return delay;
 }
 
+void cleanupAST(RTLNode* node) {
+    if (node == nullptr)
+        return;
+
+    switch (node->nodetag) {
+    case INPUT_NODE:
+        delete node;
+        break;
+    case REG_NODE: {
+        RegNode* cast = static_cast<RegNode*>(node);
+        cleanupAST(cast->Child);
+        delete cast;
+        break;
+    }
+    case OUTPUT_NODE: {
+        OutputNode* cast = static_cast<OutputNode*>(node);
+        cleanupAST(cast->Child);
+        delete cast;
+        break;
+    }
+    case PLUS_NODE:
+    case MINUS_NODE:
+    case TIMES_NODE:
+    case SHIFTL_NODE:
+    case SHIFTR_NODE:
+    case BITOR_NODE:
+    case BITXOR_NODE:
+    case BITAND_NODE: {
+        BinaryNode* cast = static_cast<BinaryNode*>(node);
+        cleanupAST(cast->leftChild);
+        cleanupAST(cast->rightChild);
+        delete cast;
+        break;
+    }
+    case BITNOT_NODE: {
+        BitWiseNOTNode* cast = static_cast<BitWiseNOTNode*>(node);
+        cleanupAST(cast->Child);
+        delete cast;
+        break;
+    }
+    default:
+        std::cerr << "Error: Tried to cleanup and unknown AST node type \n";
+        break;
+    }
+}
+
+WorkItem::~WorkItem() {
+    if (node != nullptr) {
+        cleanupAST(node);
+    }
+}
+
 void Search::unroll(WorkItem* workItem, const CostModel& costModel) {
     if (auto nonTerm = leftMostNonTerm(workItem->node)) {
         std::vector<NODETAG> prods = productions(*nonTerm);
         for (auto& prod : prods) {
             RTLNode* cloned = clone(workItem->node);
             auto loc = leftMostNonTerm(cloned);
-            WorkItem item = *replaceNonTerm(cloned, *loc, prod);
+            WorkItem item = std::move(*replaceNonTerm(cloned, *loc, prod));
             item.combDelay= workItem->combDelay;
             item.totalCost = workItem->totalCost;
 
@@ -398,8 +452,9 @@ void Search::unroll(WorkItem* workItem, const CostModel& costModel) {
                // printf("item cost %d\n", item.totalCost);
             }
 
-            if (item.combDelay <= costModel.maxCombPath)
-                m_workList.push(item);
+            if (item.combDelay <= costModel.maxCombPath) {
+                m_workList.push(std::move(item));
+            }
         }
     }
   //  printf("worklist size %d\n", m_workList.size());
@@ -408,26 +463,26 @@ void Search::unroll(WorkItem* workItem, const CostModel& costModel) {
 void Search::collectInputNodes(RTLNode* node, std::vector<InputNode*>& out) {
     if (node == nullptr) return;
     switch (node->nodetag) {
-    case INPUT_NODE:
-        out.push_back(static_cast<InputNode*>(node));
-        break;
-    case OUTPUT_NODE:
-        //std::cout << static_cast<OutputNode*>(node)->Child << "\n";
-        collectInputNodes(static_cast<OutputNode*>(node)->Child, out);
-        break;
-    case REG_NODE:
-        collectInputNodes(static_cast<RegNode*>(node)->Child, out);
-        break;
-    case BITNOT_NODE:
-        //std::cout << node->nodetag << "\n";
-        collectInputNodes(static_cast<BitWiseNOTNode*>(node)->Child, out);
-        break;
-    default: {
-        BinaryNode* b = static_cast<BinaryNode*>(node);
-        collectInputNodes(b->leftChild, out);
-        collectInputNodes(b->rightChild, out);
-        break;
-    }
+        case INPUT_NODE:
+            out.push_back(static_cast<InputNode*>(node));
+            break;
+        case OUTPUT_NODE:
+            //std::cout << static_cast<OutputNode*>(node)->Child << "\n";
+            collectInputNodes(static_cast<OutputNode*>(node)->Child, out);
+            break;
+        case REG_NODE:
+            collectInputNodes(static_cast<RegNode*>(node)->Child, out);
+            break;
+        case BITNOT_NODE:
+            //std::cout << node->nodetag << "\n";
+            collectInputNodes(static_cast<BitWiseNOTNode*>(node)->Child, out);
+            break;
+        default: {
+            BinaryNode* b = static_cast<BinaryNode*>(node);
+            collectInputNodes(b->leftChild, out);
+            collectInputNodes(b->rightChild, out);
+            break;
+        }
     }
 }
 #define MAX_INPUT_FANOUT 1
@@ -439,38 +494,37 @@ RTLNode* Search::topDown(const std::vector<std::vector<int>>& inputs, const std:
     }
 
     Verifier verify(1);
-    
-    m_workList.push({new OutputNode(), 0, 0});
+
+    WorkItem start = WorkItem(new OutputNode(), 0, 0, 0);
+    m_workList.push(std::move(start));
     while (!m_workList.empty()) {
-        WorkItem curr = m_workList.top();
+        WorkItem curr = std::move(const_cast<WorkItem&>(m_workList.top()));
         m_workList.pop();
         std::vector<InputNode*> liveInputs;
         collectInputNodes(curr.node, liveInputs);
-        if (liveInputs.size() > MAX_INPUT_FANOUT*inputs[0].size())
+        if (liveInputs.size() > MAX_INPUT_FANOUT*inputs[0].size()) {
             continue;
-        
-       // printf("here\n");
+        }
+
         if (liveInputs.size() < inputs[0].size()*MIN_INPUT_FANOUT)
         {
             unroll(&curr, costModel);
             continue;
         }
 
-        
         verify.Setup(inputs, outputs, liveInputs);
-        
-        
 
         bool complete = isComplete(curr.node);
         if (complete)
             std::cout << curr.node->PrintExpr() << std::endl;
         if (complete && verify.VerifyVM()) {
             std::cout << "SEARCH VERIFIED\n";
-            return curr.node;
+            RTLNode* temp = curr.node;
+            curr.node = nullptr;
+            return temp;
         }
         verify.Reset();
 
-        //printf("worklist size %d\n", m_workList.size());
         unroll(&curr, costModel);
     }
 

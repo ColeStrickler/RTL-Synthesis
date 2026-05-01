@@ -43,6 +43,31 @@ struct WorkItem {
     bool operator<(const WorkItem& other) const {
         return totalCost > other.totalCost;
     }
+
+    WorkItem(RTLNode* node, uint32_t depth, uint32_t totalCost, uint32_t combDelay) :
+        node(node), depth(depth), totalCost(totalCost), combDelay(combDelay){}
+
+    WorkItem(const WorkItem&) = delete;
+    WorkItem& operator=(const WorkItem&) = delete;
+
+    WorkItem(WorkItem&& other) noexcept
+        : node(other.node), depth(other.depth), totalCost(other.totalCost), combDelay(other.combDelay) {
+            other.node = nullptr;
+    }
+
+    WorkItem& operator=(WorkItem&& other) noexcept {
+        if (this != &other) {
+            node = other.node;
+            depth = other.depth;
+            totalCost = other.totalCost;
+            combDelay = other.combDelay;
+
+            other.node = nullptr;
+        }
+        return *this;
+    }
+
+    ~WorkItem();
 };
 
 class Search {
