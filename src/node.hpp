@@ -260,13 +260,17 @@ public:
 class Verifier
 {
 public:
-   Verifier(const std::vector<std::vector<int>> &input, const std::vector<int> &output, std::vector<InputNode*> input_nodes);
+   Verifier(int max_input_fan_out);
     ~Verifier();
 
     void setInputNodes(std::vector<InputNode*> input_nodes) { m_InputNodes = input_nodes; };
 
+    void Setup(const std::vector<std::vector<int>> &input, const std::vector<int> &output, std::vector<InputNode*> input_nodes);
+
     bool Verify(int i);
     bool VerifyVM();
+    
+    bool VerifyGPU();
     bool VMVerifier(int i);
     bool VMVerifierSpecificPermutation(int i, int j);
     bool VerifySpecificCombo(int input_idx, int combo);
@@ -278,7 +282,7 @@ public:
 
 
 
-
+    void Reset();
         // Stats
     int input_perm_check;
 
@@ -287,7 +291,9 @@ private:
     VM* m_VM;
     int max_input_fanout;
 
-    std::vector<std::vector<int>> input_combination_indexes;
+    std::unordered_map<int, std::vector<std::vector<int>>> input_combination_indexes;
+
+    //std::vector<std::vector<int>> input_combination_indexes;
 
     std::vector<InputNode*> m_InputNodes;
     std::vector<std::vector<int>> m_Input;

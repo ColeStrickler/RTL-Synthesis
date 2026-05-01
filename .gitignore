@@ -1,0 +1,12 @@
+# Build artifacts
+*.o
+*.out
+rtl_synth
+
+# Scala / Metals / Bloop
+.metals/
+.scala-build/
+.bloop/
+
+# VSCode
+.vscode/
