@@ -437,6 +437,9 @@ RTLNode* Search::topDown(const std::vector<std::vector<int>>& inputs, const std:
         std::cerr << "Error: starting search with a non-empty worklist. You messed something up.\n";
         return nullptr;
     }
+
+    Verifier verify(1);
+    
     m_workList.push({new OutputNode(), 0, 0});
     while (!m_workList.empty()) {
         WorkItem curr = m_workList.top();
@@ -446,16 +449,16 @@ RTLNode* Search::topDown(const std::vector<std::vector<int>>& inputs, const std:
         if (liveInputs.size() > MAX_INPUT_FANOUT*inputs[0].size())
             continue;
         
-
-
+       // printf("here\n");
         if (liveInputs.size() < inputs[0].size()*MIN_INPUT_FANOUT)
         {
             unroll(&curr, costModel);
             continue;
         }
 
-        Verifier verify(inputs, outputs, liveInputs);
-        verify.SetMaxInputFanout(1);
+        
+        verify.Setup(inputs, outputs, liveInputs);
+        
         
 
         bool complete = isComplete(curr.node);
@@ -465,7 +468,7 @@ RTLNode* Search::topDown(const std::vector<std::vector<int>>& inputs, const std:
             std::cout << "SEARCH VERIFIED\n";
             return curr.node;
         }
-
+        verify.Reset();
 
         //printf("worklist size %d\n", m_workList.size());
         unroll(&curr, costModel);

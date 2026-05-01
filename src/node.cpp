@@ -7,27 +7,38 @@ Verifier::~Verifier()
 {
 }
 
-Verifier::Verifier(const std::vector<std::vector<int>> &input, const std::vector<int> &output, std::vector<InputNode *> input_nodes) : \
- m_Input(input), m_Output(output), m_InputNodes(input_nodes), max_input_fanout(8), input_perm_check(0)
-
+#define MAX_PERMUTATION_STORE 7
+Verifier::Verifier(int max_input_fan_out) :  max_input_fanout(max_input_fan_out), input_perm_check(0)
 {
 
-    std::vector<int> input_vec; // just use indexes
-    for (int i = 0; i < m_Input[0].size(); i++)
-        input_vec.push_back(i);
+        //printf("here\n");
 
+        //printf("here\n");
+    
 
-    std::vector<std::vector<int>> ret;
-    std::vector<int> curr = {};
-    std::unordered_map<int, int> count_map;
-    BackTrackPermuteInputs(input_vec, m_InputNodes.size(), input_combination_indexes,  curr, count_map);
-    std::mt19937 g(42);  // deterministic (recommended for benchmarking)
+   // printf("here\n");
+    for (int i = 0; i < MAX_PERMUTATION_STORE; i++)
+    {
+        std::vector<int> input_vec; // just use indexes
+        std::unordered_map<int, int> count_map;
+        std::vector<int> curr = {};
+        std::vector<std::vector<int>> ret;
+        for (int j = 0; j < i; j++)
+            input_vec.push_back(j);
+        BackTrackPermuteInputs(input_vec, i, ret,  curr, count_map);
+        input_combination_indexes[i] = ret;
+    }
+        
 
-//std::shuffle(input_combination_indexes.begin(),
-//             input_combination_indexes.end(),
-//             g);
-    ////printff("init size %d\n", input_combination_indexes.size());
     m_VM = new VM();
+}
+
+void Verifier::Setup(const std::vector<std::vector<int>> &input, const std::vector<int> &output, std::vector<InputNode *> input_nodes)
+{
+  //  printf("here\n");
+    m_Input= input;
+    m_InputNodes = input_nodes;
+    m_Output = output;
 }
 
 bool Verifier::Verify(int i)
@@ -71,7 +82,7 @@ bool Verifier::Verify(int i)
 
     int combo = 0;
     ////printff("input_combination_idx_size %d\n", input_combination_indexes.size());
-    for (auto& input_combination: input_combination_indexes)
+    for (auto& input_combination: input_combination_indexes[m_InputNodes.size()])
     {
         ////printff("here\n");
         int x = 0;
@@ -167,6 +178,7 @@ bool Verifier::Verify(int i)
 #include <chrono>
 bool Verifier::VerifyVM()
 {
+  //  printf("VerifyVM()\n");
     auto start = std::chrono::high_resolution_clock::now();
 
     m_VM->Compile(m_InputNodes);
@@ -184,17 +196,21 @@ bool Verifier::VerifyVM()
 
 bool Verifier::VMVerifier(int i)
 {
+
     if (i >= m_Output.size())
     {
         return true;
     }
     int j = 0;
-    for (auto& input_combination: input_combination_indexes)
+    //printf("Size=%d, Size input combo %d\n",m_InputNodes.size(), input_combination_indexes[m_InputNodes.size()]);
+    for (auto& input_combination: input_combination_indexes[m_InputNodes.size()])
     {
+
         std::vector<uint32_t> input_vals;
         int x = 0;
         for (auto& inode: m_InputNodes) // give input nodes values
         {
+
             input_vals.push_back((m_Input[i][input_combination[x]]));
             x++;
         }
@@ -219,7 +235,7 @@ bool Verifier::VMVerifierSpecificPermutation(int i, int j)
         return true;
     }
     
-    auto input_combination = input_combination_indexes[j];
+    auto input_combination = input_combination_indexes[m_InputNodes.size()][j];
     
     std::vector<uint32_t> input_vals;
     int x = 0;
@@ -283,7 +299,7 @@ bool Verifier::VerifySpecificCombo(int input_idx, int combo)
 
 
 
-        auto& input_combination = input_combination_indexes[combo];
+        auto& input_combination = input_combination_indexes[m_InputNodes.size()][combo];
 
             int x = 0;
             for (auto& inode: m_InputNodes) // give input nodes values
@@ -422,6 +438,14 @@ void  Verifier::BackTrackPermuteInputs(std::vector<int>& input_vec, int input_co
     }
 
     return;
+}
+
+void Verifier::Reset()
+{
+    m_Input.clear();
+    m_InputNodes.clear();
+    m_Output.clear();
+    m_VM->Reset();
 }
 
 void BinaryNode::Compile(VM *vm)

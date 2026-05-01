@@ -11,6 +11,19 @@ VM::VM()
     m_PC = 0;
 }
 
+void VM::Reset()
+{
+    m_CurrentInstruction = 0;
+    m_ActiveProgramSize = 0;
+    m_NumInputs = 0;
+    m_PC = 0;
+    while(m_Stack.size())
+        m_Stack.pop();
+}
+
+
+
+
 VM::~VM()
 {
     delete[] m_Inputs;

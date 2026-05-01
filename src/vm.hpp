@@ -110,6 +110,8 @@ public:
     int ExecuteProgram();
 
 
+    void Reset();
+
 
     int ExecuteProgramDebug();
     OPCODE IncProgramCounter();
