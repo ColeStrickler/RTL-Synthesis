@@ -321,12 +321,11 @@ RTLNode* produceNode(NODETAG production) {
 }
 
 // replaces left most non terminal, call clone before
-WorkItem* Search::replaceNonTerm(RTLNode* root, const NonTermLocation& location, NODETAG production) {
+WorkItem Search::replaceNonTerm(RTLNode* root, const NonTermLocation& location, NODETAG production) {
     if (root == nullptr || location.parent == nullptr) {
-        return nullptr;
+        return WorkItem{nullptr,0,0,0};
     }
 
-    WorkItem* newItem = nullptr;
     RTLNode* newNode = produceNode(production);
    // printf("NODETAG: %d\n", newNode->nodetag);
     switch (location.slot) {
@@ -358,11 +357,11 @@ WorkItem* Search::replaceNonTerm(RTLNode* root, const NonTermLocation& location,
     }
     default:
         std::cerr << "Error: Unknown slot in replaceNonTerm.\n";
-        return nullptr;
+        return WorkItem{nullptr,0,0,0};
         break;
     }
 
-    return new WorkItem{root, 0, 0, 0};
+    return WorkItem{root, 0, 0, 0};
 }
 
 uint32_t combDelayToBoundary(RTLNode* node, const CostModel& costModel) {
@@ -437,7 +436,7 @@ void Search::unroll(WorkItem* workItem, const CostModel& costModel) {
         for (auto& prod : prods) {
             RTLNode* cloned = clone(workItem->node);
             auto loc = leftMostNonTerm(cloned);
-            WorkItem item = std::move(*replaceNonTerm(cloned, *loc, prod));
+            WorkItem item = replaceNonTerm(cloned, *loc, prod);
             item.combDelay= workItem->combDelay;
             item.totalCost = workItem->totalCost;
 
