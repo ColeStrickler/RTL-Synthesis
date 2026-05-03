@@ -74,6 +74,7 @@ class WorkList {
 public:
     std::optional<WorkItem> pop();
     void push(WorkItem item);
+    void pushAll(std::vector<WorkItem>& items);
     void finishIter();
     void close();
 

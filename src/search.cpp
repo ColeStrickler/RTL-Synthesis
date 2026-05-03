@@ -431,6 +431,8 @@ WorkItem::~WorkItem() {
 }
 
 void Search::unroll(WorkItem* workItem, const CostModel& costModel) {
+    std::vector<WorkItem> batch;
+
     if (auto nonTerm = leftMostNonTerm(workItem->node)) {
         std::vector<NODETAG> prods = productions(*nonTerm);
         for (auto& prod : prods) {
@@ -452,10 +454,13 @@ void Search::unroll(WorkItem* workItem, const CostModel& costModel) {
             }
 
             if (item.combDelay <= costModel.maxCombPath) {
-                m_workList.push(std::move(item));
+                //m_workList.push(std::move(item));
+                batch.push_back(std::move(item));
             }
         }
     }
+
+    m_workList.pushAll(batch);
   //  printf("worklist size %d\n", m_workList.size());
 }
 
@@ -581,12 +586,23 @@ std::optional<WorkItem> WorkList::pop() {
     return curr;
 }
 
+void WorkList::pushAll(std::vector<WorkItem>& items) {
+    {
+        std::lock_guard<std::mutex> lock(m_mut);
+
+        for (auto& item : items) {
+            m_workList.push(std::move(item));
+        }
+    }
+
+    m_condVar.notify_all();
+}
+
 void WorkList::push(WorkItem item) {
     {
         std::lock_guard<std::mutex> lock(m_mut);
 
         m_workList.push(std::move(item));
-        m_inFlight--;
     }
 
     m_condVar.notify_one();
