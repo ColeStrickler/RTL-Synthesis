@@ -493,7 +493,7 @@ RTLNode* end = nullptr;
 void Search::workerLoop(const std::vector<std::vector<int>>& inputs, const std::vector<int>& outputs, const CostModel& costModel) {
     Verifier verify(1);
 
-    while (!m_workList.empty() || !m_workList.inFlight()) {
+    while (true) {
         auto curr = m_workList.pop();
         if (!curr) {
             return;
