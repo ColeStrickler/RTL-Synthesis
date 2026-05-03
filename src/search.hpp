@@ -74,6 +74,7 @@ class WorkList {
 public:
     std::optional<WorkItem> pop();
     void push(WorkItem item);
+    void finishIter();
     void close();
 
     // checking this alone is not enough. need to also look at in flight

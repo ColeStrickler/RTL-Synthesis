@@ -502,12 +502,14 @@ void Search::workerLoop(const std::vector<std::vector<int>>& inputs, const std::
         std::vector<InputNode*> liveInputs;
         collectInputNodes(curr->node, liveInputs);
         if (liveInputs.size() > MAX_INPUT_FANOUT*inputs[0].size()) {
+            m_workList.finishIter();
             continue;
         }
 
         if (liveInputs.size() < inputs[0].size()*MIN_INPUT_FANOUT)
         {
             unroll(&(*curr), costModel);
+            m_workList.finishIter();
             continue;
         }
 
@@ -522,10 +524,12 @@ void Search::workerLoop(const std::vector<std::vector<int>>& inputs, const std::
             curr->node = nullptr;
             end = temp;
             m_workList.close();
+            return;
         }
         verify.Reset();
 
         unroll(&(*curr), costModel);
+        m_workList.finishIter();
     }
 }
 
@@ -564,7 +568,7 @@ RTLNode* Search::topDown(const std::vector<std::vector<int>>& inputs, const std:
 std::optional<WorkItem> WorkList::pop() {
     std::unique_lock<std::mutex> lock(m_mut);
 
-    m_condVar.wait(lock, [this]{ return !m_workList.empty() || m_close; });
+    m_condVar.wait(lock, [this]{ return !m_workList.empty() || m_close || (!m_workList.empty() && (m_inFlight == 0)); });
 
     if (m_close) return std::nullopt;
 
@@ -586,6 +590,15 @@ void WorkList::push(WorkItem item) {
     }
 
     m_condVar.notify_one();
+}
+
+void WorkList::finishIter() {
+    {
+        std::lock_guard<std::mutex> lock(m_mut);
+        m_inFlight--;
+    }
+
+    m_condVar.notify_all();
 }
 
 void WorkList::close() {
