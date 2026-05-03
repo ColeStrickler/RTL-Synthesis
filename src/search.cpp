@@ -484,48 +484,128 @@ void Search::collectInputNodes(RTLNode* node, std::vector<InputNode*>& out) {
         }
     }
 }
+
+// dumb but simple
+RTLNode* end = nullptr;
+
 #define MAX_INPUT_FANOUT 1
 #define MIN_INPUT_FANOUT 1
-RTLNode* Search::topDown(const std::vector<std::vector<int>>& inputs, const std::vector<int>& outputs, const CostModel& costModel) {
-    if (!m_workList.empty()) {
-        std::cerr << "Error: starting search with a non-empty worklist. You messed something up.\n";
-        return nullptr;
-    }
-
+void Search::workerLoop(const std::vector<std::vector<int>>& inputs, const std::vector<int>& outputs, const CostModel& costModel) {
     Verifier verify(1);
 
-    WorkItem start = WorkItem(new OutputNode(), 0, 0, 0);
-    m_workList.push(std::move(start));
-    while (!m_workList.empty()) {
-        WorkItem curr = std::move(const_cast<WorkItem&>(m_workList.top()));
-        m_workList.pop();
+    while (!m_workList.empty() || !m_workList.inFlight()) {
+        auto curr = m_workList.pop();
+        if (!curr) {
+            return;
+        }
+
         std::vector<InputNode*> liveInputs;
-        collectInputNodes(curr.node, liveInputs);
+        collectInputNodes(curr->node, liveInputs);
         if (liveInputs.size() > MAX_INPUT_FANOUT*inputs[0].size()) {
             continue;
         }
 
         if (liveInputs.size() < inputs[0].size()*MIN_INPUT_FANOUT)
         {
-            unroll(&curr, costModel);
+            unroll(&(*curr), costModel);
             continue;
         }
 
         verify.Setup(inputs, outputs, liveInputs);
 
-        bool complete = isComplete(curr.node);
+        bool complete = isComplete(curr->node);
         if (complete)
-            std::cout << curr.node->PrintExpr() << std::endl;
+            std::cout << curr->node->PrintExpr() << std::endl;
         if (complete && verify.VerifyVM()) {
             std::cout << "SEARCH VERIFIED\n";
-            RTLNode* temp = curr.node;
-            curr.node = nullptr;
-            return temp;
+            RTLNode* temp = curr->node;
+            curr->node = nullptr;
+            end = temp;
+            m_workList.close();
         }
         verify.Reset();
 
-        unroll(&curr, costModel);
+        unroll(&(*curr), costModel);
+    }
+}
+
+RTLNode* Search::topDown(const std::vector<std::vector<int>>& inputs, const std::vector<int>& outputs, const CostModel& costModel) {
+    if (!m_workList.empty()) {
+        std::cerr << "Error: starting search with a non-empty worklist. You messed something up.\n";
+        return nullptr;
     }
 
-    return nullptr;
+    WorkItem start = WorkItem(new OutputNode(), 0, 0, 0);
+    m_workList.push(std::move(start));
+    std::cout << "here\n";
+
+    std::thread t1([this, &inputs, &outputs, &costModel]() {
+        workerLoop(inputs, outputs, costModel);
+    });
+    std::thread t2([this, &inputs, &outputs, &costModel]() {
+        workerLoop(inputs, outputs, costModel);
+    });
+    std::thread t3([this, &inputs, &outputs, &costModel]() {
+        workerLoop(inputs, outputs, costModel);
+    });
+    std::thread t4([this, &inputs, &outputs, &costModel]() {
+        workerLoop(inputs, outputs, costModel);
+    });
+
+
+    t1.join();
+    t2.join();
+    t3.join();
+    t4.join();
+
+    return end;
+}
+
+std::optional<WorkItem> WorkList::pop() {
+    std::unique_lock<std::mutex> lock(m_mut);
+
+    m_condVar.wait(lock, [this]{ return !m_workList.empty() || m_close; });
+
+    if (m_close) return std::nullopt;
+
+    WorkItem curr = std::move(const_cast<WorkItem&>(m_workList.top()));
+    m_workList.pop();
+    m_inFlight++;
+
+    lock.unlock();
+
+    return curr;
+}
+
+void WorkList::push(WorkItem item) {
+    {
+        std::lock_guard<std::mutex> lock(m_mut);
+
+        m_workList.push(std::move(item));
+        m_inFlight--;
+    }
+
+    m_condVar.notify_one();
+}
+
+void WorkList::close() {
+    {
+        std::lock_guard<std::mutex> lock(m_mut);
+
+        m_close = true;
+    }
+
+    m_condVar.notify_all();
+}
+
+bool WorkList::empty() {
+    std::lock_guard<std::mutex> lock(m_mut);
+
+    return m_workList.empty();
+}
+
+bool WorkList::inFlight() {
+    std::lock_guard<std::mutex> lock(m_mut);
+
+    return m_inFlight != 0;
 }

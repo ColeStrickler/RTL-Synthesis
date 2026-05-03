@@ -70,12 +70,31 @@ struct WorkItem {
     ~WorkItem();
 };
 
+class WorkList {
+public:
+    std::optional<WorkItem> pop();
+    void push(WorkItem item);
+    void close();
+
+    // checking this alone is not enough. need to also look at in flight
+    bool empty();
+    bool inFlight();
+
+private:
+    std::priority_queue<WorkItem> m_workList;
+    std::mutex m_mut;
+    std::condition_variable m_condVar;
+
+    bool m_close = false;
+    int m_inFlight = 0;
+};
+
 class Search {
 public:
     RTLNode* topDown(const std::vector<std::vector<int>>& inputs, const std::vector<int>& outputs, const CostModel& costModel);
 
 private:
-    std::priority_queue<WorkItem> m_workList;
+    WorkList m_workList;
 
     RTLNode* clone(RTLNode* toClone);
     bool isComplete(RTLNode* node);
@@ -84,6 +103,7 @@ private:
     WorkItem replaceNonTerm(RTLNode* root, const NonTermLocation& location, NODETAG production);
     void unroll(WorkItem* workItem, const CostModel& costModel);
     void collectInputNodes(RTLNode* node, std::vector<InputNode*>& out);
+    void workerLoop(const std::vector<std::vector<int>>& inputs, const std::vector<int>& outputs, const CostModel& costModel);
 };
 
 #endif
