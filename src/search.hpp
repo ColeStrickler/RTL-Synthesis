@@ -5,7 +5,7 @@
 #include <queue>
 #include <stdint.h>
 #include <vector>
-
+#include <condition_variable>
 #include "node.hpp"
 
 struct CostModel {
@@ -16,14 +16,14 @@ struct CostModel {
     uint32_t gateCost(NODETAG tag) const {
         switch (tag) {
             case PLUS_NODE:
-            case MINUS_NODE: return nBits * 8;
-            case TIMES_NODE: return nBits * 7;
+            case MINUS_NODE: return nBits * 10;
+            case TIMES_NODE: return nBits * 10;
             case SHIFTL_NODE:
-            case SHIFTR_NODE: return nBits * 10;
+            case SHIFTR_NODE: return nBits * 20;
             case BITAND_NODE:
             case BITOR_NODE:
             case BITXOR_NODE:
-            case BITNOT_NODE: return nBits * 10;
+            case BITNOT_NODE: return nBits * 20;
             default: return 0;
         }
     }
@@ -41,6 +41,8 @@ struct WorkItem {
     uint32_t combDelay;
 
     bool operator<(const WorkItem& other) const {
+
+
         return totalCost > other.totalCost;
     }
 
@@ -77,6 +79,7 @@ public:
     void pushAll(std::vector<WorkItem>& items);
     void finishIter();
     void close();
+    int size() {return m_workList.size();}
 
     // checking this alone is not enough. need to also look at in flight
     bool empty();

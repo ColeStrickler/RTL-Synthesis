@@ -432,7 +432,7 @@ WorkItem::~WorkItem() {
 
 void Search::unroll(WorkItem* workItem, const CostModel& costModel) {
     std::vector<WorkItem> batch;
-
+    
     if (auto nonTerm = leftMostNonTerm(workItem->node)) {
         std::vector<NODETAG> prods = productions(*nonTerm);
         for (auto& prod : prods) {
@@ -445,18 +445,23 @@ void Search::unroll(WorkItem* workItem, const CostModel& costModel) {
             if (prod == REG_NODE) {
                 item.totalCost += costModel.regCost;
                 item.combDelay = 0;
+               // printf("using reg\n");
             } else if (prod == INPUT_NODE) {
                 // NOTHING
             } else {
-                item.combDelay = combDelayToBoundary(loc->parent, costModel) + costModel.gateCost(prod);
+                item.combDelay = costModel.gateCost(loc->parent->nodetag) + costModel.gateCost(prod);
                 item.totalCost +=  costModel.gateCost(prod);
-               // printf("item cost %d\n", item.totalCost);
+               // printf("item cost %d\n", item.combDelay);
             }
-
+            
             if (item.combDelay <= costModel.maxCombPath) {
                 //m_workList.push(std::move(item));
                 batch.push_back(std::move(item));
             }
+            //else
+            //{
+            //    printf("bad %d\n", m_workList.size());
+            //}
         }
     }
 
@@ -493,17 +498,17 @@ void Search::collectInputNodes(RTLNode* node, std::vector<InputNode*>& out) {
 // dumb but simple
 RTLNode* end = nullptr;
 
-#define MAX_INPUT_FANOUT 1
+#define MAX_INPUT_FANOUT 5
 #define MIN_INPUT_FANOUT 1
 void Search::workerLoop(const std::vector<std::vector<int>>& inputs, const std::vector<int>& outputs, const CostModel& costModel) {
-    Verifier verify(1);
+    Verifier verify(MAX_INPUT_FANOUT);
 
     while (true) {
         auto curr = m_workList.pop();
         if (!curr) {
             return;
         }
-
+       // printf("here\n");
         std::vector<InputNode*> liveInputs;
         collectInputNodes(curr->node, liveInputs);
         if (liveInputs.size() > MAX_INPUT_FANOUT*inputs[0].size()) {
@@ -519,7 +524,7 @@ void Search::workerLoop(const std::vector<std::vector<int>>& inputs, const std::
         }
 
         verify.Setup(inputs, outputs, liveInputs);
-
+        
         bool complete = isComplete(curr->node);
         if (complete)
             std::cout << curr->node->PrintExpr() << std::endl;

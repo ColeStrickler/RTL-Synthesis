@@ -101,9 +101,12 @@ int main()
     //printf("Result %d\n", vm.ExecuteProgramDebug());
 
     Search searcher;
-    CostModel cm{32, 1200, 1500000};
+    CostModel cm{32, 600, 0};
     auto start = std::chrono::high_resolution_clock::now();
-    auto out2 = searcher.topDown({{4,14,7,4,14,7}, {6,20,10,6,20,10}, {1,1,1,1,1,1}}, {16+(14*14)+49, 36+400+100, 3}, cm);
+    auto out2 = searcher.topDown({ {5}, {22}, {3}, {1}}, {5*5*5*5-5, 22*22*22*22-22, 3*3*3*3-3, 1*1*1*1-1}, cm);
+
+    //auto out2 = searcher.topDown({{0}, {int(UINT32_MAX)}}, {int(UINT32_MAX), 0}, cm);
+
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
     std::cout << "Time: " << duration.count() << " us\n";

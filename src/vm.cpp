@@ -136,7 +136,7 @@ int VM::ExecuteProgram()
             case OPCODE::BIT_OR:        {uint32_t b = PopStack(); uint32_t a = PopStack(); PushStack(a | b); break;}
             case OPCODE::BIT_XOR:       {uint32_t b = PopStack(); uint32_t a = PopStack(); PushStack(a ^ b); break;}
             case OPCODE::DIV:           {uint32_t b = PopStack(); uint32_t a = PopStack(); PushStack(a / b); break;}
-            case OPCODE::MINUS:         {uint32_t b = PopStack(); uint32_t a = PopStack(); PushStack(a - b); break;}
+            case OPCODE::MINUS:         {uint32_t b = PopStack(); uint32_t a = PopStack(); PushStack(b - a); break;}
             case OPCODE::PLUS:          {uint32_t b = PopStack(); uint32_t a = PopStack(); PushStack(a + b); break;}
             case OPCODE::TIMES:         {uint32_t b = PopStack(); uint32_t a = PopStack(); PushStack(a * b); break;}
             case OPCODE::SHIFT_LEFT:    {uint32_t b = PopStack(); uint32_t a = PopStack(); PushStack(a << b); break;}
