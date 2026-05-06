@@ -105,7 +105,7 @@ private:
     bool isComplete(RTLNode* node);
     std::optional<NonTermLocation> leftMostNonTerm(RTLNode* node);
     std::vector<NODETAG> productions(const NonTermLocation& location);
-    WorkItem replaceNonTerm(RTLNode* root, const NonTermLocation& location, NODETAG production);
+    WorkItem replaceNonTerm(RTLNode* root, const NonTermLocation& location, NODETAG production, uint32_t cost);
     void unroll(WorkItem* workItem, const CostModel& costModel);
     void collectInputNodes(RTLNode* node, std::vector<InputNode*>& out);
     void workerLoop(const std::vector<std::vector<int>>& inputs, const std::vector<int>& outputs, const CostModel& costModel);

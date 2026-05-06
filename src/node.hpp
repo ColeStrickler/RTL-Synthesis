@@ -30,7 +30,7 @@ enum NODETAG
 class RTLNode
 {
 public:
-    RTLNode(NODETAG tag) : nodetag(tag), parent(nullptr), val(0), inputs_received(0), inputs_needed(0) {}
+    RTLNode(NODETAG tag) : nodetag(tag), parent(nullptr), val(0), inputs_received(0), inputs_needed(0), cost(0) {}
     virtual ~RTLNode() 
     {
 
@@ -66,6 +66,7 @@ public:
     int inputs_received;
     int inputs_needed;
     NODETAG nodetag;
+    uint32_t cost;
 
 private:
     

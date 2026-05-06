@@ -101,7 +101,7 @@ int main()
     //printf("Result %d\n", vm.ExecuteProgramDebug());
 
     Search searcher;
-    CostModel cm{32, 600, 0};
+    CostModel cm{32, 1200, 0};
     auto start = std::chrono::high_resolution_clock::now();
     auto out2 = searcher.topDown({ {5}, {22}, {3}, {1}}, {5*5*5*5-5, 22*22*22*22-22, 3*3*3*3-3, 1*1*1*1-1}, cm);
 

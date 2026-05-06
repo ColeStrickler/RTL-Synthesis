@@ -13,8 +13,6 @@ RTLNode* Search::clone(RTLNode* toClone) {
     RTLNode* newNode = nullptr;
     switch (toClone->nodetag) {
         case INPUT_NODE: {
-            // this ends up being one base case
-            InputNode* inputNode = static_cast<InputNode*>(toClone);
             InputNode* newInputNode = new InputNode();
             newNode = newInputNode;
             break;
@@ -128,6 +126,7 @@ RTLNode* Search::clone(RTLNode* toClone) {
             break;
     }
 
+    if (newNode) newNode->cost = toClone->cost;
     return newNode;
 }
 
@@ -321,18 +320,20 @@ RTLNode* produceNode(NODETAG production) {
 }
 
 // replaces left most non terminal, call clone before
-WorkItem Search::replaceNonTerm(RTLNode* root, const NonTermLocation& location, NODETAG production) {
+WorkItem Search::replaceNonTerm(RTLNode* root, const NonTermLocation& location, NODETAG production, uint32_t cost) {
     if (root == nullptr || location.parent == nullptr) {
         return WorkItem{nullptr,0,0,0};
     }
 
     RTLNode* newNode = produceNode(production);
+    newNode->cost = location.parent->cost + cost;
    // printf("NODETAG: %d\n", newNode->nodetag);
     switch (location.slot) {
     case NonTermLocation::CHILD: {
         if (location.parent->nodetag == REG_NODE) {
             RegNode* cast = static_cast<RegNode*>(location.parent);
             cast->Child = newNode;
+            newNode->cost = 0 + cost;
         } else if (location.parent->nodetag == OUTPUT_NODE) {
             OutputNode* cast = static_cast<OutputNode*>(location.parent);
             cast->Child = newNode;
@@ -432,13 +433,14 @@ WorkItem::~WorkItem() {
 
 void Search::unroll(WorkItem* workItem, const CostModel& costModel) {
     std::vector<WorkItem> batch;
-    
+
     if (auto nonTerm = leftMostNonTerm(workItem->node)) {
         std::vector<NODETAG> prods = productions(*nonTerm);
         for (auto& prod : prods) {
             RTLNode* cloned = clone(workItem->node);
             auto loc = leftMostNonTerm(cloned);
-            WorkItem item = replaceNonTerm(cloned, *loc, prod);
+            uint32_t cost = costModel.gateCost(prod);
+            WorkItem item = replaceNonTerm(cloned, *loc, prod, cost);
             item.combDelay= workItem->combDelay;
             item.totalCost = workItem->totalCost;
 
@@ -449,19 +451,14 @@ void Search::unroll(WorkItem* workItem, const CostModel& costModel) {
             } else if (prod == INPUT_NODE) {
                 // NOTHING
             } else {
-                item.combDelay = costModel.gateCost(loc->parent->nodetag) + costModel.gateCost(prod);
-                item.totalCost +=  costModel.gateCost(prod);
+                item.combDelay = (loc->parent->nodetag == REG_NODE || loc->parent->nodetag == OUTPUT_NODE) ? 0 + cost : loc->parent->cost + cost;
+                item.totalCost += cost;
                // printf("item cost %d\n", item.combDelay);
             }
-            
+
             if (item.combDelay <= costModel.maxCombPath) {
-                //m_workList.push(std::move(item));
                 batch.push_back(std::move(item));
             }
-            //else
-            //{
-            //    printf("bad %d\n", m_workList.size());
-            //}
         }
     }
 
@@ -524,7 +521,7 @@ void Search::workerLoop(const std::vector<std::vector<int>>& inputs, const std::
         }
 
         verify.Setup(inputs, outputs, liveInputs);
-        
+
         bool complete = isComplete(curr->node);
         if (complete)
             std::cout << curr->node->PrintExpr() << std::endl;
